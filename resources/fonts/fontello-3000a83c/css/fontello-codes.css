@@ -1,0 +1,7 @@
+
+.icon-zoom-in:before { content: '\e800'; } /* '' */
+.icon-zoom-out:before { content: '\e801'; } /* '' */
+.icon-redo:before { content: '\e802'; } /* '' */
+.icon-undo:before { content: '\e803'; } /* '' */
+.icon-cancel-circled:before { content: '\e804'; } /* '' */
+.icon-plus-circled:before { content: '\e805'; } /* '' */

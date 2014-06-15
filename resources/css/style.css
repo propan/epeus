@@ -1,0 +1,124 @@
+@import url("../fonts/fontello-3000a83c/css/fontello.css");
+
+body {
+	background-color: #F5F5F5;
+    margin: 0;
+}
+
+.header {
+    background-color: #EEE;
+    border-bottom: 1px solid #E2E2E2;
+}
+
+.application-title {
+    float: left;
+    font-family: 'Crafty Girls';
+    font-size: 30px;
+    padding: 4px 10px 2px; 
+    color: #555;
+}
+
+.toolbar {
+    float: right;
+    padding-right: 30px;
+}
+
+.toolbar-item {
+    float: left;
+    cursor: pointer;
+    color: #C5C5C5;
+    font-size: 25px;
+    margin: 0 4px;
+    padding: 15px 0 10px;
+}
+
+.toolbar-item:hover {
+    color: #A0A0A0;
+}
+
+.toolbar-item.disabled {
+    color: #E0E0E0;
+    cursor: not-allowed;
+}
+
+.inner:before, .inner:after {
+    clear: both;
+    content: " ";
+    display: table;
+}
+
+.inner:after {
+    clear: both;
+}
+
+#zoom-container {
+    overflow: hidden;
+    position: absolute;
+    top: 50px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+
+#web-container {
+    overflow: scroll;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.web-node, .root-node {
+    position: absolute;
+    cursor: hand;
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+
+.root-node {
+    font-size: 18px;
+    padding: 4px;
+    background-color: #c0c0c0;
+    color: #ffffff;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    -ms-border-radius: 5px;
+    -o-border-radius: 5px;
+    border: 2px solid rgba(255,255,255,0.4);
+}
+
+.root-node .action-button {
+    background-color: #b0b0b0;
+}
+
+.action-button {
+    cursor: pointer;
+    position: absolute;
+    border-radius: 50%;
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    -ms-border-radius: 50%;
+    -o-border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.4);
+}
+
+.action-button img {
+    width: 20px;
+    height: 20px;
+}
+
+.node-empty-label {
+    color: #c0c0c0;
+}
+
+.dragging {
+    z-index: 100;
+    cursor: -webkit-grabbing;
+    cursor: -moz-grabbing;
+}
