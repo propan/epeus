@@ -81,26 +81,44 @@
         (put! events [:move [@node [dx dy]]])))))
 
 (defn mouse-enter
-  [e node owner]
+  [e node owner events]
   (when-not (or (om/get-state owner :editing)
                 (om/get-state owner :dragging))
+    (put! events [:tooltip "drag to move or click to edit"])
     (let [label (om/get-node owner "label")
           [w h] (element-bounds label)]
       (om/set-state! owner :button-x w)
-      (om/set-state! owner :hover true))))
+      (om/set-state! owner :hover-node true))))
 
 (defn mouse-leave
-  [e node owner]
-  (om/set-state! owner :hover nil))
+  [e node owner events]
+  (put! events [:tooltip nil])
+  (om/set-state! owner :hover-node nil))
 
 (defn execute-action
   [e node owner events]
   (let [node @node]
     (if (om/get-state owner :alt)
-      (put! events [:remove node])
+      (doto events
+          (put! [:tooltip nil])
+          (put! [:remove node]))
       (let [[offset] (get @(om/get-shared owner :dim) (:uid node) [0 20])]
-        (om/set-state! owner :hover nil)
+        ;;(om/set-state! owner :hover nil)
         (put! events [:add [node offset]])))))
+
+(defn mouse-enter-action
+  [e owner events]
+  (om/set-state! owner :hover-action true)
+  (when e
+    (.stopPropagation e))
+  (if (om/get-state owner :alt)
+    (put! events [:tooltip "click to remove or release <alt> to branch out"])
+    (put! events [:tooltip "click to branch out or hold <alt> to remove"])))
+
+(defn mouse-leave-action
+  [e owner events]
+  (om/set-state! owner :hover-action nil)
+  (put! events [:tooltip nil]))
 
 ;;
 ;; Component
@@ -136,6 +154,8 @@
                    (condp = ch
                      alt  (do
                             (om/set-state! owner :alt v)
+                            (when (om/get-state owner :hover-action)
+                              (mouse-enter-action nil owner events))
                             (recur))
                      kill (do
                             (async/untap (:mouse-up comm) up-ch)
@@ -168,19 +188,19 @@
             (om/set-state! owner :needs-focus nil)))))
     
     om/IRenderState
-    (render-state [_ {:keys [alt comm dragging edit-title editing hover]}]
+    (render-state [_ {:keys [alt comm dragging edit-title editing hover-node hover-action]}]
       (let [{:keys [x y color title uid]} node
             events                    (:events comm)
             root                      (= uid -1)
-            actionable                (and hover
+            actionable                (and (or hover-node hover-action)
                                            (not (or editing dragging)))
             empty                     (string/blank? (.trim title))]
         (dom/div #js {:className   (str (if root "root-node" "web-node") (when dragging " dragging"))
                       :style #js   {:top y :left x :color (when-not root color)}
                       :onMouseDown #(drag-start % node owner)
                       :onMouseUp   #(drag-stop % node owner events)
-                      :onMouseOver #(mouse-enter % node owner)
-                      :onMouseOut  #(mouse-leave % node owner)}
+                      :onMouseOver #(mouse-enter % node owner events)
+                      :onMouseOut  #(mouse-leave % node owner events)}
                  (dom/div #js {:ref       "label"
                                :className (if empty "node-empty-label" "node-label")
                                :style     (hidden editing)
@@ -200,6 +220,8 @@
                                            :display (if actionable "inline-block" "none")}
                                ;; prevent event propagation to web-node onMouseDown
                                :onMouseDown #(.stopPropagation %)
+                               :onMouseOver #(mouse-enter-action % owner events)
+                               :onMouseOut  #(mouse-leave-action % owner events)
                                :onClick #(execute-action % node owner events)}
                           (dom/img #js {:src (if (true? alt)
                                                "resources/images/minus.svg"

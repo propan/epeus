@@ -150,4 +150,5 @@
                                           :x        467
                                           :y        90
                                           :color    "#64AEFF"
-                                          :children {}}}}}}}))
+                                          :children {}}}}}}
+    :tooltip ""}))

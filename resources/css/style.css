@@ -136,3 +136,11 @@ body {
     cursor: -webkit-grabbing;
     cursor: -moz-grabbing;
 }
+
+.tooltip {
+    font-family: 'Lato';
+    font-size: 16px;
+    color: #808080;
+    position: fixed;
+    text-align: center;
+}

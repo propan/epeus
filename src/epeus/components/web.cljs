@@ -151,6 +151,10 @@
                                (update-in n [:children] dissoc uid)) %)
                 :create-restore-point))
 
+(defn update-tooltip
+  [state tooltip]
+  (om/transact! state :tooltip (constantly tooltip)))
+
 (defn handle-event
   [type state data]
   (case type
@@ -158,6 +162,7 @@
     :add        (add-node    state data)
     :remove     (remove-node state data)
     :drag-stop  (move-node   state data :create-restore-point)
+    :tooltip    (update-tooltip state data)
     nil))
 
 ;;
