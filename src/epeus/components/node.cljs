@@ -66,10 +66,7 @@
           off-y (.-clientY e)]
       (let [dx (- off-x rel-x)
             dy (- off-y rel-y)]
-        (put! events [:drag-stop [@node [dx dy]]])))
-    
-;;    (put! events [:drag-stop @node])
-    ))
+        (put! events [:drag-stop [@node [dx dy]]])))))
 
 (defn drag
   [e node owner events]
@@ -174,7 +171,7 @@
     (render-state [_ {:keys [alt comm dragging edit-title editing hover]}]
       (let [{:keys [x y color title uid]} node
             events                    (:events comm)
-            root                      (= uid 0)
+            root                      (= uid -1)
             actionable                (and hover
                                            (not (or editing dragging)))
             empty                     (string/blank? (.trim title))]

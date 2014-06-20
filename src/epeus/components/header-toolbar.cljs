@@ -3,10 +3,30 @@
             [om.dom :as dom :include-macros true]
             [epeus.history :as history]))
 
+;;
+;; Actions
+;;
+
+(defn reset-app-state
+  [state]
+  (om/transact! state :items
+                #(-> %
+                     (assoc :title "")
+                     (assoc :children {}))
+                :create-restore-point))
+
+;;
+;; Helpers
+;;
+
 (defn toolbar-item-class
   [predicate]
   (str "toolbar-item"
        (when-not (predicate) " disabled")))
+
+;;
+;; Components
+;;
 
 (defn create-button-component
   [class predicate action]
@@ -24,9 +44,12 @@
     om/IRender
     (render [_]
       (dom/div #js {:className "inner"}
-                 (om/build (create-button-component
-                            "icon-undo" history/can-undo? #(history/undo))
-                           state)
-                 (om/build (create-button-component
-                            "icon-redo" history/can-redo? #(history/redo))
-                           state)))))
+               (om/build (create-button-component
+                          "icon-undo" history/can-undo? #(history/undo))
+                         state)
+               (om/build (create-button-component
+                          "icon-redo" history/can-redo? #(history/redo))
+                         state)
+               (om/build (create-button-component
+                          "icon-trash" #(constantly true) #(reset-app-state state))
+                         state)))))

@@ -93,6 +93,10 @@ body {
     border: 2px solid rgba(255,255,255,0.4);
 }
 
+.root-node .node-empty-label {
+    color: #505050;
+}
+
 .root-node .action-button {
     background-color: #b0b0b0;
 }
