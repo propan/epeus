@@ -26,15 +26,15 @@
     [(.-width rect) (.-height rect)]))
 
 (defn darken
-  [color]
+  [color factor]
   (-> color
       (color/hexToRgb)
-      (color/darken 0.15)
+      (color/darken factor)
       (color/rgbArrayToHex)))
 
 (defn lighten
-  [color]
+  [color factor]
   (-> color
       (color/hexToRgb)
-      (color/lighten 0.15)
+      (color/lighten factor)
       (color/rgbArrayToHex)))

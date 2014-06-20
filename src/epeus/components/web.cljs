@@ -4,9 +4,11 @@
             [epeus.events :refer [mouse-down mouse-move mouse-up keyboard-alt]]
             [epeus.components.node :refer [node-component]]
             [epeus.history :refer [create-restore-point]]
-            [epeus.utils :refer [element-bounds hidden next-uid]]
+            [epeus.utils :as u :refer [element-bounds hidden next-uid]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
+
+(def INITIAL-COLORS ["#77E401" "#A345FF" "#FFDA45" "#FF8845" "#45FFD2" "#45D2FF" "#45ADFF" "#AD45FF" "#FFF045" "#FF45A6" "#FF5959"])
 
 (defn map-nodes
   [f root]
@@ -46,6 +48,16 @@
                             #(reduce
                               (fn [r [k v]] (assoc r k (walk v))) {} %))))]
     (walk root)))
+
+;;
+;; Helpers
+;;
+
+(defn randomize-shade
+  [color]
+  (if (< 0.5 (Math/random))
+    (u/lighten color 0.05)
+    (u/darken color 0.05)))
 
 ;;
 ;; Draw
@@ -108,13 +120,15 @@
       [(+ 40 nx) (incrimentor ny 25)])))
 
 (defn new-node
-  [{:keys [x y color children] :as parent} new-uid offset]
+  [{:keys [uid x y color children] :as parent} new-uid offset]
   (let [[nx ny] (best-position (+ x offset) y children)]
     {:uid      new-uid
      :title    ""
      :x        nx
      :y        ny
-     :color    color
+     :color    (if (= uid -1)
+                 (rand-nth INITIAL-COLORS)
+                 (randomize-shade color))
      :children {}}))
 
 (defn add-node

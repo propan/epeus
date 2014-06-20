@@ -2,9 +2,11 @@
 
 (def app-state
   (atom
-   {:items {:uid   0
-            :title "Mind Maps"
-            :x 398 :y 199 :color "#67d7c4"
+   {:items {:uid      -1
+            :title    "Mind Maps"
+            :x        398
+            :y        199
+            :color    "#67d7c4"
             :children {1 {:uid      1
                           :title    "communicate"
                           :x        531
