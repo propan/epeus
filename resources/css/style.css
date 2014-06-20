@@ -18,6 +18,15 @@ body {
     color: #555;
 }
 
+.application-version {
+    float: left;
+    padding-top: 25px;
+    font-family: 'Lato';
+    font-size: 10px;
+    margin-left: -5px;
+    color: #444;
+}
+
 .toolbar {
     float: right;
     padding-right: 30px;
@@ -73,6 +82,7 @@ body {
 }
 
 .web-node, .root-node {
+    font-family: 'Lato';
     position: absolute;
     cursor: hand;
     cursor: grab;
