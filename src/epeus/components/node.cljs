@@ -195,7 +195,7 @@
                  (dom/div #js {:ref "action-button"
                                :className "action-button"
                                :style #js {:backgroundColor   (when-not root color)
-                                           :top     (if root 3 -4)
+                                           :top     (if root 3 -2)
                                            :left    (om/get-state owner :button-x)
                                            :display (if actionable "inline-block" "none")}
                                ;; prevent event propagation to web-node onMouseDown
