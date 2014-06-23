@@ -38,3 +38,7 @@
       (color/hexToRgb)
       (color/lighten factor)
       (color/rgbArrayToHex)))
+
+(defn show-element
+  [el]
+  (style/setElementShown el true))

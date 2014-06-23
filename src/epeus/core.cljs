@@ -4,6 +4,7 @@
             [epeus.components.header-toolbar :refer [header-toolbar-component]]
             [epeus.components.tooltip :refer [tooltip-component]]
             [epeus.history :as history]
+            [epeus.utils :refer [show-element]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 
@@ -25,3 +26,6 @@
  tooltip-component
  a/app-state
  {:target (. js/document (getElementById "tooltip"))})
+
+(when (re-find #"(?i)(iPad|iPhone|iPod)" js/navigator.userAgent)
+  (show-element (. js/document (getElementById "browser-warning"))))

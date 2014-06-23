@@ -59,7 +59,6 @@
   [e node owner events]
   (when (om/get-state owner :dragging)
     (om/set-state! owner :dragging nil)
-
     (let [rel-y (om/get-state owner :rel-y)
           rel-x (om/get-state owner :rel-x)
           off-x (.-clientX e)

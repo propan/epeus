@@ -144,3 +144,23 @@ body {
     position: fixed;
     text-align: center;
 }
+
+#browser-warning {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    background: rgba(0,0,0,0.80);
+    font: normal 18px "Lato"; 
+    color: #c0c0c0;
+    text-align: center;
+    padding-top: 110px;
+    text-shadow: 1px 1px 1px #000;
+}
+
+.warning-message {
+    margin: 30px auto;
+    width: 340px;
+}
