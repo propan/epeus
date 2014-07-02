@@ -137,12 +137,20 @@ body {
     cursor: -moz-grabbing;
 }
 
-.tooltip {
+#tooltip-holder {
     font-family: 'Lato';
     font-size: 16px;
     color: #808080;
-    position: fixed;
+    position: absolute;
     text-align: center;
+    top: 10px;
+    left: 20%;
+    right: 20%;
+}
+
+.tooltip {
+    margin: auto;
+    padding: 8px 0;
 }
 
 #browser-warning {

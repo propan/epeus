@@ -47,12 +47,6 @@
     
     om/IRenderState
     (render-state [_ {:keys [window-width window-height]}]
-      (let [tooltip (:tooltip state)
-            hidden  (nil? tooltip)
-            width   (/ window-width 2)]
-        (dom/div #js {:className "tooltip"
-                      :style #js {:display (when hidden "none")
-                                  :top     (- window-height 50)
-                                  :width   width
-                                  :left    (/ (- window-width width) 2)}}
+      (let [tooltip (get state :tooltip "")]
+        (dom/div #js {:className "tooltip"}
                  tooltip)))))

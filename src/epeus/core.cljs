@@ -25,7 +25,7 @@
 (om/root
  tooltip-component
  a/app-state
- {:target (. js/document (getElementById "tooltip"))})
+ {:target (. js/document (getElementById "tooltip-holder"))})
 
 (when (re-find #"(?i)(iPad|iPhone|iPod)" js/navigator.userAgent)
   (show-element (. js/document (getElementById "browser-warning"))))
