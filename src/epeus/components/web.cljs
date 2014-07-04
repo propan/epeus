@@ -12,23 +12,12 @@
 
 (defn map-nodes
   [f root]
-  (let [walk (fn walk [node]
+  (let [walk (fn walk [parent node]
                (lazy-seq
-                (cons (f node)
-                      (mapcat (fn [[ k v]] (walk v))
+                (cons (f parent node)
+                      (mapcat (fn [[ k v]] (walk node v))
                               (:children node)))))]
-    (walk root)))
-
-(defn map-connections
-  [f root]
-  (let [walk (fn walk [node]
-               (lazy-seq
-                (concat
-                 (map (fn [[uid child]]
-                        (f node child)) (:children node))
-                 (mapcat (fn [[ k v]] (walk v))
-                         (:children node)))))]
-    (walk root)))
+    (walk nil root)))
 
 (defn apply-tree
   [f root]
@@ -59,24 +48,25 @@
     (u/lighten color 0.05)
     (u/darken color 0.05)))
 
+(defn create-rect
+  [dims {:keys [x y uid]}]
+  (when-let [dim (get dims uid)]
+    (into [x y] dim)))
+
 ;;
 ;; Draw
 ;;
 
 (defn connection-points
-  [xf yf [wf hf] xt yt [wt ht]]
-  (let [wf2 (/ wf 2)]
-    (if (< (+ xt wt) (+ xf wf2))
-      [:left  [xf (+ yf (/ hf 2))] [(+ xt wt) (+ yt (/ ht 2))]]
-      [:right [(+ xf wf) (+ yf (/ hf 2))] [xt (+ yt (/ ht 2))]])))
+  [fx fy fw fh tx ty tw th]
+  (let [fw2 (/ fw 2)]
+    (if (< (+ tx tw) (+ fx fw2))
+      [:left  [fx (+ fy (/ fh 2))] [(+ tx tw) (+ ty (/ th 2))]]
+      [:right [(+ fx fw) (+ fy (/ fh 2))] [tx (+ ty (/ th 2))]])))
 
 (defn generate-path
-  [from from-rect to to-rect]
-  (let [fx (:x from)
-        fy (:y from)
-        tx (:x to)
-        ty (:y to)
-        [dir [sx sy] [ex ey]] (connection-points fx fy from-rect tx ty to-rect)
+  [[fx fy fw fh] [tx ty tw th]]
+  (let [[dir [sx sy] [ex ey]] (connection-points fx fy fw fh tx ty tw th)
         dx (Math/max (Math/abs (/ (- sx ex) 2)) 10)
         dy (Math/max (Math/abs (/ (- sy ey) 2)) 10)
         path (if (= dir :left)
@@ -132,17 +122,18 @@
      :children {}}))
 
 (defn add-node
-  [state [{:keys [uid]} offset]]
-  (om/transact! state :items
-                #(apply-match (fn [parent]
-                                (let [new-uid (next-uid)]
-                                  (update-in parent [:children]
-                                             assoc new-uid
-                                             (new-node parent new-uid offset))))
-                              %
-                              (fn [n]
-                                (= uid (:uid n)))) ;; TODO
-                :create-restore-point))
+  [state {:keys [uid]}]
+  (let [[offset] (get-in @state [:graph uid])]
+    (om/transact! state :items
+                  #(apply-match (fn [parent]
+                                  (let [new-uid (next-uid)]
+                                    (update-in parent [:children]
+                                               assoc new-uid
+                                               (new-node parent new-uid offset))))
+                                %
+                                (fn [n]
+                                  (= uid (:uid n)))) ;; TODO
+                  :create-restore-point)))
 
 (defn remove-node
   [state {:keys [uid]}]
@@ -155,6 +146,10 @@
   [state tooltip]
   (om/transact! state :tooltip (constantly tooltip)))
 
+(defn update-dimensions
+  [state [uid dim]]
+  (om/transact! state :graph #(assoc % uid dim)))
+
 (defn handle-event
   [type state data]
   (case type
@@ -163,11 +158,23 @@
     :remove     (remove-node state data)
     :drag-stop  (move-node   state data :create-restore-point)
     :tooltip    (update-tooltip state data)
+    :dim        (update-dimensions state data)
     nil))
 
 ;;
 ;; Component
 ;;
+
+(defn path-component
+  [state owner]
+  (reify
+    om/IRenderState
+    (render-state [_ _]
+      (let [{:keys [from-rect to-rect color]} state]
+        (dom/path #js {:d           (generate-path from-rect to-rect)
+                       :strokeWidth "2"
+                       :stroke      color
+                       :fill        "none"})))))
 
 (defn web-component
   [state owner]
@@ -185,6 +192,8 @@
            (let [[type data] (<! events)]
              (handle-event type state data))))))
 
+;; TODO: unmount
+
     om/IRenderState
     (render-state [_ {:keys [comm]}]
       (apply dom/div #js {:id "web-container"}
@@ -192,20 +201,20 @@
                                  :height 5000
                                  :style  #js {:overflow "hidden"
                                               :z-index  0}}
-                    (let [dim @(om/get-shared owner :dim)]
-                      (map-connections
+                    (let [dim (:graph state)]
+                      (map-nodes
                        (fn [from to]
-                         (let [from-rect (get dim (:uid from))
-                               to-rect   (get dim (:uid to) [0 20])]
+                         (let [from-rect (create-rect dim from)
+                               to-rect   (create-rect dim to)]
                            (when (and from-rect to-rect)
-                             (dom/path #js {:d           (generate-path from from-rect to to-rect)
-                                            :strokeWidth "2"
-                                            :stroke      (:color to)
-                                            :fill        "none"}))))
+                             (om/build path-component {:color     (:color to)
+                                                       :from-rect from-rect
+                                                       :to-rect   to-rect}
+                                       {:react-key (str "link-" (:uid from) "-" (:uid to))}))))
                        (:items state))))
              (map-nodes
-              (fn [node]
-                (om/build node-component node
+              (fn [parent node]
+                (om/build node-component (dissoc node :children)
                           {:init-state {:comm comm}
                            :react-key  (:uid node)}))
               (:items state))))))

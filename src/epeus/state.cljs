@@ -2,7 +2,8 @@
 
 (def app-state
   (atom
-   {:items {:uid      -1
+   {:graph {}
+    :items {:uid      -1
             :title    "Mind Maps"
             :x        398
             :y        199

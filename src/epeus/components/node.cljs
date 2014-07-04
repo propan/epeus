@@ -1,6 +1,6 @@
 (ns epeus.components.node
   (:require-macros [cljs.core.async.macros :refer [alt! go go-loop]])
-  (:require [cljs.core.async :as async :refer [chan close! put! tap]]
+  (:require [cljs.core.async :as async :refer [chan close! put! sliding-buffer tap >! <!]]
             [epeus.utils :as u :refer [element-bounds hidden next-uid]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
@@ -10,9 +10,22 @@
 (def ENTER_KEY 13)
 
 (defn update-bounds
-  [dim uid owner]
-  (let [n (om/get-node owner)]
-    (swap! dim assoc uid (element-bounds n))))
+  [ch owner]
+  (let [n      (om/get-node owner)
+        bounds (element-bounds n)]
+    (put! ch bounds)))
+
+(defn state-chan
+  [in]
+  (let [out (chan (sliding-buffer 1))]
+    (go
+     (loop [state nil
+            next  (<! in)]
+       (when next
+         (when-not (= state next)
+           (>! out next))
+         (recur next (<! in)))))
+    out))
 
 ;;
 ;; Interaction
@@ -91,8 +104,9 @@
 
 (defn mouse-leave
   [e node owner events]
-  (put! events [:tooltip nil])
-  (om/set-state! owner :hover-node nil))
+  (when-not (om/get-state owner :editing)
+    (put! events [:tooltip nil])
+    (om/set-state! owner :hover-node nil)))
 
 (defn execute-action
   [e node owner events]
@@ -101,9 +115,7 @@
       (doto events
           (put! [:tooltip nil])
           (put! [:remove node]))
-      (let [[offset] (get @(om/get-shared owner :dim) (:uid node) [0 20])]
-        ;;(om/set-state! owner :hover nil)
-        (put! events [:add [node offset]])))))
+      (put! events [:add node]))))
 
 (defn mouse-enter-action
   [e owner events]
@@ -132,12 +144,14 @@
     
     om/IInitState
     (init-state [_]
-      {:edit-title (:title node)
-       :kill-ch    (chan)})
+      (let [dim (chan (sliding-buffer 1))]
+        {:edit-title (:title node)
+         :dim-in     dim
+         :dim-out    (state-chan dim)
+         :kill-ch    (chan)}))
 
     om/IDidMount
     (did-mount [_]
-      (update-bounds (om/get-shared owner :dim) (:uid node) owner)
       ;; something is wrong here
       (let [comm    (om/get-state owner :comm)
             alt-ch  (chan)
@@ -145,21 +159,28 @@
             move-ch (chan)
             events  (:events comm)
             kill    (om/get-state owner :kill-ch)
+            dim-in  (om/get-state owner :dim-in)
+            dim     (om/get-state owner :dim-out)
             up      (tap (:mouse-up comm) up-ch)
             move    (tap (:mouse-move comm) move-ch)
             alt     (tap (:alt-key comm) alt-ch)]
+        (update-bounds dim-in owner)
         (go-loop []
-                 (let [[v ch] (alts! [kill alt move up] :priority true)]
+                 (let [[v ch] (alts! [kill alt dim move up] :priority true)]
                    (condp = ch
                      alt  (do
                             (om/set-state! owner :alt v)
                             (when (om/get-state owner :hover-action)
                               (mouse-enter-action nil owner events))
                             (recur))
+                     dim  (do
+                            (put! events [:dim [(:uid @node) v]])
+                            (recur))
                      kill (do
                             (async/untap (:mouse-up comm) up-ch)
                             (async/untap (:mouse-move comm) move-ch)
                             (async/untap (:alt-key comm) alt-ch)
+                            (close! dim-in)
                             (close! kill))
                      up   (do
                             (drag-stop v node owner events)
@@ -177,7 +198,7 @@
     (did-update [_ _ _]
       (let [editing (om/get-state owner :editing)]
         (when-not editing
-          (update-bounds (om/get-shared owner :dim) (:uid node) owner))
+          (update-bounds (om/get-state owner :dim-in) owner))
         (when (and editing
                    (om/get-state owner :needs-focus))
           (let [node (om/get-node owner "edit-field")

@@ -14,8 +14,7 @@
  web-component
  a/app-state
  {:target    (. js/document (getElementById "zoom-container"))
-  :tx-listen history/handle-transaction
-  :shared    {:dim (atom {})}})
+  :tx-listen history/handle-transaction})
 
 (om/root
  header-toolbar-component
