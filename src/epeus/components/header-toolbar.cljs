@@ -9,7 +9,7 @@
 
 (defn reset-app-state
   [state]
-  (om/transact! state :items
+  (om/transact! state [:main :items]
                 #(-> %
                      (assoc :title "")
                      (assoc :children {}))
@@ -28,15 +28,32 @@
 ;; Components
 ;;
 
-(defn create-button-component
-  [class predicate action]
-  (fn  [state owner]
-    (reify
-      om/IRender
-      (render [_]
-        (dom/div #js {:className (toolbar-item-class predicate)
-                      :onClick   action}
-         (dom/i #js {:className class}))))))
+(defn undo-button-component
+  [state owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:className (toolbar-item-class history/can-undo?)
+                    :onClick   #(history/undo)}
+               (dom/i #js {:className "icon-undo"})))))
+
+(defn redo-button-component
+  [state owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:className (toolbar-item-class history/can-redo?)
+                    :onClick   #(history/redo)}
+               (dom/i #js {:className "icon-redo"})))))
+
+(defn reset-button-component
+  [state owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:className "toolbar-item"
+                    :onClick   #(reset-app-state state)}
+               (dom/i #js {:className "icon-trash"})))))
 
 (defn header-toolbar-component
   [state owner]
@@ -44,12 +61,6 @@
     om/IRender
     (render [_]
       (dom/div #js {:className "inner"}
-               (om/build (create-button-component
-                          "icon-undo" history/can-undo? #(history/undo))
-                         state)
-               (om/build (create-button-component
-                          "icon-redo" history/can-redo? #(history/redo))
-                         state)
-               (om/build (create-button-component
-                          "icon-trash" #(constantly true) #(reset-app-state state))
-                         state)))))
+               (om/build undo-button-component state)
+               (om/build redo-button-component state)
+               (om/build reset-button-component state)))))

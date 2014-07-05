@@ -5,6 +5,12 @@ body {
     margin: 0;
 }
 
+.container {
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+
 .header {
     background-color: #EEE;
     border-bottom: 1px solid #E2E2E2;
@@ -68,9 +74,6 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-select: none;
 }
 
 #web-container {

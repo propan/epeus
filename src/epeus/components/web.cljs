@@ -83,7 +83,7 @@
 
 (defn move-node
   [state [{:keys [uid] :as node} [dx dy]] tag]
-  (om/transact! state :items
+  (om/transact! state [:main :items]
                 #(apply-match (fn [{:keys [x y] :as root}]
                                 (let [delta-x (- x dx)
                                       delta-y (- y dy)]
@@ -124,7 +124,7 @@
 (defn add-node
   [state {:keys [uid]}]
   (let [[offset] (get-in @state [:graph uid])]
-    (om/transact! state :items
+    (om/transact! state [:main :items]
                   #(apply-match (fn [parent]
                                   (let [new-uid (next-uid)]
                                     (update-in parent [:children]
@@ -137,7 +137,7 @@
 
 (defn remove-node
   [state {:keys [uid]}]
-  (om/transact! state :items
+  (om/transact! state [:main :items]
                 #(apply-tree (fn [n]
                                (update-in n [:children] dissoc uid)) %)
                 :create-restore-point))
@@ -196,25 +196,26 @@
 
     om/IRenderState
     (render-state [_ {:keys [comm]}]
-      (apply dom/div #js {:id "web-container"}
-             (apply dom/svg #js {:width  5000
-                                 :height 5000
-                                 :style  #js {:overflow "hidden"
-                                              :z-index  0}}
-                    (let [dim (:graph state)]
-                      (map-nodes
-                       (fn [from to]
-                         (let [from-rect (create-rect dim from)
-                               to-rect   (create-rect dim to)]
-                           (when (and from-rect to-rect)
-                             (om/build path-component {:color     (:color to)
-                                                       :from-rect from-rect
-                                                       :to-rect   to-rect}
-                                       {:react-key (str "link-" (:uid from) "-" (:uid to))}))))
-                       (:items state))))
-             (map-nodes
-              (fn [parent node]
-                (om/build node-component (dissoc node :children)
-                          {:init-state {:comm comm}
-                           :react-key  (:uid node)}))
-              (:items state))))))
+      (let [items (get-in state [:main :items])]
+        (apply dom/div #js {:id "web-container"}
+               (apply dom/svg #js {:width  5000
+                                   :height 5000
+                                   :style  #js {:overflow "hidden"
+                                                :z-index  0}}
+                      (let [dim (:graph state)]
+                        (map-nodes
+                         (fn [from to]
+                           (let [from-rect (create-rect dim from)
+                                 to-rect   (create-rect dim to)]
+                             (when (and from-rect to-rect)
+                               (om/build path-component {:color     (:color to)
+                                                         :from-rect from-rect
+                                                         :to-rect   to-rect}
+                                         {:react-key (str "link-" (:uid from) "-" (:uid to))}))))
+                         items)))
+               (map-nodes
+                (fn [parent node]
+                  (om/build node-component (dissoc node :children)
+                            {:init-state {:comm comm}
+                             :react-key  (:uid node)}))
+                items))))))

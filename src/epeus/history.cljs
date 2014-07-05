@@ -2,7 +2,7 @@
   (:require [epeus.state :as epeus]))
 
 (def past
-  (atom [(get-in @epeus/app-state [:items])]))
+  (atom [(get-in @epeus/app-state [:main])]))
 
 (def future
   (atom []))
@@ -26,23 +26,23 @@
     (swap! future conj (last @past))
     (swap! past pop)
     (reset! epeus/app-state
-            (assoc-in @epeus/app-state [:items] (last @past)))))
+            (assoc-in @epeus/app-state [:main] (last @past)))))
 
 (defn redo
   []
   (when (can-redo?)
     (reset! epeus/app-state
-            (assoc-in @epeus/app-state [:items] (last @future)))
+            (assoc-in @epeus/app-state [:main] (last @future)))
     (save-restore-point (last @future))
     (swap! future pop)))
 
 (defn create-restore-point
   ([]
-     (create-restore-point (get-in @epeus/app-state [:items])))
+     (create-restore-point (get-in @epeus/app-state [:main])))
   ([state]
      (reset! future [])
      (save-restore-point state)))
 
 (defn handle-transaction [tx-data root-cursor]
   (when (= (:tag tx-data) :create-restore-point)
-    (create-restore-point (get-in (:new-state tx-data) [:items]))))
+    (create-restore-point (get-in (:new-state tx-data) [:main]))))
