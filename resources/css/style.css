@@ -60,7 +60,8 @@ body {
     clear: both;
 }
 
-#zoom-container {
+#document-container {
+    font-family: 'Lato';
     overflow: hidden;
     position: absolute;
     top: 50px;
@@ -82,7 +83,6 @@ body {
 }
 
 .web-node, .root-node {
-    font-family: 'Lato';
     position: absolute;
     cursor: hand;
     cursor: grab;

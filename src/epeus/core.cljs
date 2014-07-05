@@ -13,7 +13,7 @@
 (om/root
  web-component
  a/app-state
- {:target    (. js/document (getElementById "zoom-container"))
+ {:target    (. js/document (getElementById "document-container"))
   :tx-listen history/handle-transaction})
 
 (om/root

@@ -44,7 +44,8 @@
   [e node owner]
   (when-let [new-title (om/get-state owner :edit-title)]
     (om/update! node :title new-title :create-restore-point)
-    (om/set-state! owner :editing false)))
+    (om/set-state! owner :hover-node nil)
+    (om/set-state! owner :editing nil)))
 
 (defn change [e node owner]
   (om/set-state! owner :edit-title (.. e -target -value)))
