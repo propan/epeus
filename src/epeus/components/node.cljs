@@ -32,7 +32,8 @@
 ;;
 
 (defn edit-start
-  [node owner]
+  [node owner events]
+  (put! events [:tooltip nil])
   (if-not (om/get-state owner :ignore-click)
     (doto owner
       (om/set-state! :editing true)
@@ -41,22 +42,29 @@
     (om/set-state! owner :ignore-click nil)))
 
 (defn commit-changes
-  [e node owner]
-  (when-let [new-title (om/get-state owner :edit-title)]
-    (om/update! node :title new-title :create-restore-point)
-    (om/set-state! owner :hover-node nil)
-    (om/set-state! owner :editing nil)))
+  [e node owner events]
+  (when (om/get-state owner :editing)
+    ;; reset editing state
+    (doto owner
+      (om/set-state! :hover-node nil)
+      (om/set-state! :editing nil))
+    ;; trigger rename event only if the title has changed 
+    (let [new-title (om/get-state owner :edit-title)
+          node      @node]
+      (when (and new-title
+                 (not (= (:title node) new-title)))
+        (put! events [:rename [(:uid node) new-title]])))))
 
 (defn change [e node owner]
   (om/set-state! owner :edit-title (.. e -target -value)))
 
 (defn key-down
-  [e node owner]
+  [e node owner events]
   (condp == (.-keyCode e)
     ESCAPE_KEY (doto owner
-                 (om/set-state! :editing nil)
-                 (om/set-state! :edit-title (:title @node)))
-    ENTER_KEY  (commit-changes e node owner)
+                 (om/set-state! :hover-node nil)
+                 (om/set-state! :editing nil))
+    ENTER_KEY  (commit-changes e node owner events)
     nil))
 
 (defn drag-start
@@ -65,21 +73,23 @@
     (let [n     (om/get-node owner)
           rel-x (- (.-pageX e) (.-offsetLeft n))
           rel-y (- (.-pageY e) (.-offsetTop n))]
-      (om/set-state! owner :rel-x rel-x)
-      (om/set-state! owner :rel-y rel-y)
-      (om/set-state! owner :dragging true))))
+      (doto owner
+        (om/set-state! :rel-x rel-x)
+        (om/set-state! :rel-y rel-y)
+        (om/set-state! :dragging true)))))
 
 (defn drag-stop
   [e node owner events]
   (when (om/get-state owner :dragging)
+    ;; reset dragging state
     (om/set-state! owner :dragging nil)
-    (let [rel-y (om/get-state owner :rel-y)
-          rel-x (om/get-state owner :rel-x)
-          off-x (.-clientX e)
-          off-y (.-clientY e)]
-      (let [dx (- off-x rel-x)
-            dy (- off-y rel-y)]
-        (put! events [:drag-stop [@node [dx dy]]])))))
+    ;; trigger drop event only if the node was dragged
+    (when (om/get-state owner :ignore-click)
+      (let [rel-y (om/get-state owner :rel-y)
+            rel-x (om/get-state owner :rel-x)
+            off-x (.-clientX e)
+            off-y (.-clientY e)]
+        (put! events [:drop [@node [(- off-x rel-x) (- off-y rel-y)]]])))))
 
 (defn drag
   [e node owner events]
@@ -225,14 +235,14 @@
                  (dom/div #js {:ref       "label"
                                :className (if empty "node-empty-label" "node-label")
                                :style     (hidden editing)
-                               :onClick   #(edit-start node owner)}
+                               :onClick   #(edit-start node owner events)}
                           (if empty "[click to edit]" title))
                  (dom/input #js {:ref       "edit-field"
                                  :style     (hidden (not editing))
                                  :value     edit-title
-                                 :onKeyDown #(key-down % node owner)
+                                 :onKeyDown #(key-down % node owner events)
                                  :onChange  #(change % node owner)
-                                 :onBlur    #(commit-changes % node owner)})
+                                 :onBlur    #(commit-changes % node owner events)})
                  (dom/div #js {:ref "action-button"
                                :className "action-button"
                                :style #js {:backgroundColor   (when-not root color)

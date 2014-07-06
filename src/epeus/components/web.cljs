@@ -3,8 +3,7 @@
   (:require [cljs.core.async :as async :refer [chan tap]]
             [epeus.events :refer [mouse-down mouse-move mouse-up keyboard-alt]]
             [epeus.components.node :refer [node-component]]
-            [epeus.history :refer [create-restore-point]]
-            [epeus.utils :as u :refer [element-bounds hidden next-uid]]
+            [epeus.utils :as u :refer [element-bounds hidden next-uid now]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 
@@ -81,8 +80,12 @@
 ;; Events
 ;;
 
+(defn create-restore-point
+  [state]
+  (om/update! state [:main :modified] (now) :create-restore-point))
+
 (defn move-node
-  [state [{:keys [uid] :as node} [dx dy]] tag]
+  [state [{:keys [uid] :as node} [dx dy]] backup?]
   (om/transact! state [:main :items]
                 #(apply-match (fn [{:keys [x y] :as root}]
                                 (let [delta-x (- x dx)
@@ -94,8 +97,19 @@
                                               root)))
                               %
                               (fn [n]
-                                (== uid (:uid n))))
-                tag))
+                                (== uid (:uid n)))))
+  (when backup?
+    (create-restore-point state)))
+
+(defn rename-node
+  [state [uid title]]
+  (om/transact! state [:main :items]
+                #(apply-match (fn [node]
+                                (assoc node :title title))
+                              %
+                              (fn [n]
+                                (== uid (:uid n)))))
+  (create-restore-point state))
 
 (defn best-position
   [x y children]
@@ -132,15 +146,15 @@
                                                (new-node parent new-uid offset))))
                                 %
                                 (fn [n]
-                                  (= uid (:uid n)))) ;; TODO
-                  :create-restore-point)))
+                                  (= uid (:uid n)))))
+    (create-restore-point state)))
 
 (defn remove-node
   [state {:keys [uid]}]
   (om/transact! state [:main :items]
                 #(apply-tree (fn [n]
-                               (update-in n [:children] dissoc uid)) %)
-                :create-restore-point))
+                               (update-in n [:children] dissoc uid)) %))
+  (create-restore-point state))
 
 (defn update-tooltip
   [state tooltip]
@@ -153,11 +167,12 @@
 (defn handle-event
   [type state data]
   (case type
-    :move       (move-node   state data :no-restore-point)
-    :add        (add-node    state data)
-    :remove     (remove-node state data)
-    :drag-stop  (move-node   state data :create-restore-point)
-    :tooltip    (update-tooltip state data)
+    :rename     (rename-node       state data)
+    :move       (move-node         state data false)
+    :add        (add-node          state data)
+    :remove     (remove-node       state data)
+    :drop       (move-node         state data true)
+    :tooltip    (update-tooltip    state data)
     :dim        (update-dimensions state data)
     nil))
 

@@ -1,4 +1,5 @@
-(ns epeus.state)
+(ns epeus.state
+  (:require [epeus.utils :refer [now]]))
 
 (def app-state
   (atom
@@ -7,6 +8,8 @@
 
     :main
     {
+     :modified
+     (now)
      :items {:uid      -1
              :title    "Mind Maps"
              :x        398

@@ -42,3 +42,7 @@
 (defn show-element
   [el]
   (style/setElementShown el true))
+
+(defn now
+  []
+  (.now js/Date))
