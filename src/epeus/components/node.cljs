@@ -220,7 +220,7 @@
     
     om/IRenderState
     (render-state [_ {:keys [alt comm dragging edit-title editing hover-node hover-action]}]
-      (let [{:keys [x y color title uid]} node
+      (let [{:keys [x y color title uid position]} node
             events                    (:events comm)
             root                      (= uid -1)
             actionable                (and (or hover-node hover-action)
@@ -246,8 +246,10 @@
                  (dom/div #js {:ref "action-button"
                                :className "action-button"
                                :style #js {:backgroundColor   (when-not root color)
-                                           :top     (if root 3 -2)
-                                           :left    (om/get-state owner :button-x)
+                                           :top     (if root 3 -1)
+                                           :left    (if (= position :left)
+                                                      -23
+                                                      (om/get-state owner :button-x)) ;; TODO: get rid of magic numbers and :button-x
                                            :display (if actionable "inline-block" "none")}
                                ;; prevent event propagation to web-node onMouseDown
                                :onMouseDown #(.stopPropagation %)

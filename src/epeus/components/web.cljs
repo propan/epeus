@@ -52,6 +52,14 @@
   (when-let [dim (get dims uid)]
     (into [x y] dim)))
 
+(defn child-position
+  [graph {px :x py :y puid :uid} {cx :x cy :y cuid :uid}]
+  (let [[pw ph] (get graph puid)
+        [cw ch] (get graph cuid)]
+    (if (and pw ph cw ch (< (+ cx cw) (+ px (/ pw 2))))
+      :left
+      :right)))
+
 ;;
 ;; Draw
 ;;
@@ -211,26 +219,28 @@
 
     om/IRenderState
     (render-state [_ {:keys [comm]}]
-      (let [items (get-in state [:main :items])]
+      (let [items (get-in state [:main :items])
+            graph (:graph state)]
         (apply dom/div #js {:id "web-container"}
                (apply dom/svg #js {:width  5000
                                    :height 5000
                                    :style  #js {:overflow "hidden"
                                                 :z-index  0}}
-                      (let [dim (:graph state)]
-                        (map-nodes
-                         (fn [from to]
-                           (let [from-rect (create-rect dim from)
-                                 to-rect   (create-rect dim to)]
-                             (when (and from-rect to-rect)
-                               (om/build path-component {:color     (:color to)
-                                                         :from-rect from-rect
-                                                         :to-rect   to-rect}
-                                         {:react-key (str "link-" (:uid from) "-" (:uid to))}))))
-                         items)))
+                      (map-nodes
+                       (fn [from to]
+                         (let [from-rect (create-rect graph from)
+                               to-rect   (create-rect graph to)]
+                           (when (and from-rect to-rect)
+                             (om/build path-component {:color     (:color to)
+                                                       :from-rect from-rect
+                                                       :to-rect   to-rect}
+                                       {:react-key (str "link-" (:uid from) "-" (:uid to))}))))
+                       items))
                (map-nodes
                 (fn [parent node]
-                  (om/build node-component (dissoc node :children)
+                  (om/build node-component (-> node
+                                               (dissoc :children)
+                                               (assoc  :position (child-position graph parent node)))
                             {:init-state {:comm comm}
                              :react-key  (:uid node)}))
                 items))))))
