@@ -28,6 +28,17 @@
     out))
 
 ;;
+;; Positioning
+;;
+
+(defn get-button-position
+  [[w h] side root?]
+  (let [offset-y (if root? -3 0)]
+    (if (= side :left)
+      [-23 (- (/ h 2) 11 offset-y)]
+      [w   (- (/ h 2) 11 offset-y)])))
+
+;;
 ;; Interaction
 ;;
 
@@ -104,14 +115,14 @@
         (put! events [:move [@node [dx dy]]])))))
 
 (defn mouse-enter
-  [e node owner events]
+  [e owner events]
   (when-not (or (om/get-state owner :editing)
                 (om/get-state owner :dragging))
     (put! events [:tooltip "drag to move or click to edit"])
-    (let [label (om/get-node owner "label")
-          [w h] (element-bounds label)]
-      (om/set-state! owner :button-x w)
-      (om/set-state! owner :hover-node true))))
+    (let [label (om/get-node owner "label")]
+      (doto owner
+        (om/set-state! :bounds (element-bounds label))
+        (om/set-state! :hover-node true)))))
 
 (defn mouse-leave
   [e node owner events]
@@ -221,16 +232,19 @@
     om/IRenderState
     (render-state [_ {:keys [alt comm dragging edit-title editing hover-node hover-action]}]
       (let [{:keys [x y color title uid position]} node
-            events                    (:events comm)
-            root                      (= uid -1)
-            actionable                (and (or hover-node hover-action)
-                                           (not (or editing dragging)))
-            empty                     (string/blank? (.trim title))]
-        (dom/div #js {:className   (str (if root "root-node" "web-node") (when dragging " dragging"))
-                      :style #js   {:top y :left x :color (when-not root color)}
+            events                                 (:events comm)
+            root?                                  (= uid -1)
+            actionable                             (and (or hover-node hover-action)
+                                                        (not (or editing dragging)))
+            empty                                  (string/blank? (.trim title))
+            [button-left button-top]               (if-let [bounds (om/get-state owner :bounds)]
+                                                     (get-button-position bounds position root?)
+                                                     [0 0])]
+        (dom/div #js {:className   (str (if root? "root-node" "web-node") (when dragging " dragging"))
+                      :style #js   {:top y :left x :color (when-not root? color)}
                       :onMouseDown #(drag-start % node owner)
                       :onMouseUp   #(drag-stop % node owner events)
-                      :onMouseOver #(mouse-enter % node owner events)
+                      :onMouseOver #(mouse-enter % owner events)
                       :onMouseOut  #(mouse-leave % node owner events)}
                  (dom/div #js {:ref       "label"
                                :className (if empty "node-empty-label" "node-label")
@@ -245,12 +259,10 @@
                                  :onBlur    #(commit-changes % node owner events)})
                  (dom/div #js {:ref "action-button"
                                :className "action-button"
-                               :style #js {:backgroundColor   (when-not root color)
-                                           :top     (if root 3 -1)
-                                           :left    (if (= position :left)
-                                                      -23
-                                                      (om/get-state owner :button-x)) ;; TODO: get rid of magic numbers and :button-x
-                                           :display (if actionable "inline-block" "none")}
+                               :style #js {:backgroundColor (when-not root? color)
+                                           :top             button-top
+                                           :left            button-left
+                                           :display         (if actionable "inline-block" "none")}
                                ;; prevent event propagation to web-node onMouseDown
                                :onMouseDown #(.stopPropagation %)
                                :onMouseOver #(mouse-enter-action % owner events)
