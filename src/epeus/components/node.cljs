@@ -131,13 +131,13 @@
     (om/set-state! owner :hover-node nil)))
 
 (defn execute-action
-  [e node owner events]
+  [e node position owner events]
   (let [node @node]
     (if (om/get-state owner :alt)
       (doto events
           (put! [:tooltip nil])
           (put! [:remove node]))
-      (put! events [:add node]))))
+      (put! events [:add [node position]]))))
 
 (defn mouse-enter-action
   [e owner events]
@@ -267,7 +267,7 @@
                                :onMouseDown #(.stopPropagation %)
                                :onMouseOver #(mouse-enter-action % owner events)
                                :onMouseOut  #(mouse-leave-action % owner events)
-                               :onClick #(execute-action % node owner events)}
+                               :onClick     #(execute-action % node position owner events)} ;; wtf?
                           (dom/img #js {:src (if (true? alt)
                                                "resources/images/minus.svg"
                                                "resources/images/plus.svg")})))))))

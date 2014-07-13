@@ -119,21 +119,42 @@
                                 (== uid (:uid n)))))
   (create-restore-point state))
 
+(defn offsets
+  "Generates an infinite sequence of offsests starting with initital value of :init and a step of :step.
+
+   Example:
+   (take 5 (offsets 0 10)) => (10 -10 20 -20 30)"
+  [init step]
+  (let [next (+ init step)]
+    (concat
+     [next (- next)]
+     (lazy-seq
+      (offsets next step)))))
+
+(defn- overlap?
+  "Checks if a new node at position :y overlaps with any of existing children."
+  [y children]
+  (some #(< (Math/abs (- y (:y %))) 20) children))
+
 (defn best-position
-  [x y children]
-  (if (empty? children)
-    [(+ x 40) y]
-    (let [[selector incrimentor] (if (> (Math/random) 0.5)
-                                   [Math/max +]
-                                   [Math/min -])
-          [nx ny] (reduce (fn [[x y] [k v]]
-                            [(Math/min x (:x v)) (selector y (:y v))])
-                          [x y] children)]
-      [(+ 40 nx) (incrimentor ny 25)])))
+  "Calculates the best position for a new node."
+  [x y width side children]
+  (let [predicate   (if (= side :left) < >)
+        offset-x-fn (if (= side :left) - +)
+        children    (vec (filter #(predicate (:x %) x) (vals children)))
+        x-position  (offset-x-fn x (if (= side :left) 140 (+ width 50)))]
+    (if-not (seq children)
+      [x-position y]
+      (loop [[offset & other] (offsets 0 20)]
+        (let [y-position (+ y offset)]
+          (if (overlap? y-position children)
+            (recur other)
+            [x-position y-position]))))))
 
 (defn new-node
-  [{:keys [uid x y color children] :as parent} new-uid offset]
-  (let [[nx ny] (best-position (+ x offset) y children)]
+  [{:keys [uid x y color children] :as parent} new-uid side offset]
+  (let [[nx ny] (best-position x y offset side children)]
+    (print nx ny)
     {:uid      new-uid
      :title    ""
      :x        nx
@@ -144,14 +165,14 @@
      :children {}}))
 
 (defn add-node
-  [state {:keys [uid]}]
+  [state [{:keys [uid]} side]]
   (let [[offset] (get-in @state [:graph uid])]
     (om/transact! state [:main :items]
                   #(apply-match (fn [parent]
                                   (let [new-uid (next-uid)]
                                     (update-in parent [:children]
                                                assoc new-uid
-                                               (new-node parent new-uid offset))))
+                                               (new-node parent new-uid side offset))))
                                 %
                                 (fn [n]
                                   (= uid (:uid n)))))
@@ -240,7 +261,7 @@
                 (fn [parent node]
                   (om/build node-component (-> node
                                                (dissoc :children)
-                                               (assoc  :position (child-position graph parent node)))
+                                               (assoc  :position (child-position graph parent node))) ;; I'm not quite sure it's the way to go..
                             {:init-state {:comm comm}
                              :react-key  (:uid node)}))
                 items))))))
