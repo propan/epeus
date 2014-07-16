@@ -154,7 +154,6 @@
 (defn new-node
   [{:keys [uid x y color children] :as parent} new-uid side offset]
   (let [[nx ny] (best-position x y offset side children)]
-    (print nx ny)
     {:uid      new-uid
      :title    ""
      :x        nx

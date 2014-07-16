@@ -1,7 +1,8 @@
 (ns epeus.utils
   (:require [goog.color :as color]
             [goog.style :as style]
-            [goog.dom :as dom])
+            [goog.dom :as dom]
+            [goog.dom.forms :as forms])
   (:import [goog.ui IdGenerator]))
 
 (defn next-uid
@@ -13,6 +14,16 @@
   (if is-hidden
     #js {:display "none"}
     #js {}))
+
+(defn get-by-id
+  "Finds DOM element by id"
+  [id]
+  (. js/document (getElementById id)))
+
+
+(defn set-value
+  [el val]
+  (forms/setValue el val))
 
 ;;TODO: remove
 (defn element-offset

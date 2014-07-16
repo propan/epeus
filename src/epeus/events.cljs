@@ -42,3 +42,10 @@
     (events/listen vm events/EventType.RESIZE #(create-resize-event vm ch))
     (create-resize-event vm ch) ;; put to the channel initial size
     ch))
+
+(defn file-uploads
+  [chooser]
+  (let [ch (chan)]
+    (events/listen chooser events/EventType.CHANGE #(put! ch {:command :file-upload
+                                                              :data    %}))
+    ch))

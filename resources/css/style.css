@@ -160,6 +160,10 @@ body {
     display: none;
 }
 
+#document-chooser {
+    visibility: hidden;
+}
+
 #browser-warning {
     position: absolute;
     top: 0;

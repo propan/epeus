@@ -20,6 +20,11 @@
   (when-not (= state (last @past))
     (swap! past conj state)))
 
+(defn forget!
+  []
+  (reset! past [(get-in @epeus/app-state [:main])])
+  (reset! future []))
+
 (defn undo
   []
   (when (can-undo?)
