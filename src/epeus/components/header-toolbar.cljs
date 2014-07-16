@@ -1,5 +1,7 @@
 (ns epeus.components.header-toolbar
-  (:require [om.core :as om :include-macros true]
+  (:require-macros [cljs.core.async.macros :refer [go-loop]])
+  (:require [cljs.core.async :as async :refer [chan put!]]
+            [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [epeus.history :as history]))
 
@@ -28,39 +30,65 @@
 ;; Components
 ;;
 
-(defn undo-button-component
-  [state owner]
+(defn button-component
+  [item owner]
   (reify
-    om/IRender
-    (render [_]
-      (dom/div #js {:className (toolbar-item-class history/can-undo?)
-                    :onClick   #(history/undo)}
-               (dom/i #js {:className "icon-undo"})))))
-
-(defn redo-button-component
-  [state owner]
-  (reify
-    om/IRender
-    (render [_]
-      (dom/div #js {:className (toolbar-item-class history/can-redo?)
-                    :onClick   #(history/redo)}
-               (dom/i #js {:className "icon-redo"})))))
-
-(defn reset-button-component
-  [state owner]
-  (reify
-    om/IRender
-    (render [_]
-      (dom/div #js {:className "toolbar-item"
-                    :onClick   #(reset-app-state state)}
-               (dom/i #js {:className "icon-trash"})))))
+    om/IRenderState
+    (render-state [_ {:keys [commands]}]
+      (dom/div #js {:className (:class item)
+                    :onClick   #(put! commands {:command (:command item)
+                                                :owner   owner})}
+               (dom/i #js {:className (:type item)})))))
 
 (defn header-toolbar-component
   [state owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_]
+      {:commands (chan)})
+
+    om/IWillMount
+    (will-mount [_]
+      (let [commands (om/get-state owner :commands)]
+        (go-loop []
+                 (when-let [{:keys [command owner]} (<! commands)]
+                   (case command
+                     :undo  (history/undo)
+                     :redo  (history/redo)
+                     :reset (reset-app-state state)
+                     nil)
+                   (recur)))))
+
+    om/IRenderState
+    (render-state [_ {:keys [commands]}]
       (dom/div #js {:className "inner"}
-               (om/build undo-button-component state)
-               (om/build redo-button-component state)
-               (om/build reset-button-component state)))))
+               (om/build button-component
+                         {:class   (toolbar-item-class history/can-undo?)
+                          :type    "icon-undo"
+                          :command :undo}
+                         {:init-state {:commands commands}})
+               (om/build button-component
+                         {:class   (toolbar-item-class history/can-redo?)
+                          :type    "icon-redo"
+                          :command :redo}
+                         {:init-state {:commands commands}})
+               (om/build button-component
+                         {:class   "toolbar-item"
+                          :type    "icon-trash"
+                          :command :reset}
+                         {:init-state {:commands commands}})
+               (om/build button-component
+                         {:class   "toolbar-item"
+                          :type    "icon-download"
+                          :command :download}
+                         {:init-state {:commands commands}})
+               (om/build button-component
+                         {:class   "toolbar-item"
+                          :type    "icon-upload"
+                          :command :upload}
+                         {:init-state {:commands commands}})
+               (om/build button-component
+                         {:class   "toolbar-item"
+                          :type    "icon-picture"
+                          :command :export}
+                         {:init-state {:commands commands}})))))
