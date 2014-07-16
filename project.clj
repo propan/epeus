@@ -16,8 +16,10 @@
                                    :optimizations :none
                                    :pretty-print true
                                    :source-map true
-                                   :preamble ["resources/js/vendor/react-0.10.0/react_with_addons.min.js"]
-                                   :externs ["resources/js/vendor/react-0.10.0/react_with_addons.js"]
+                                   :preamble ["resources/js/vendor/react-0.10.0/react_with_addons.min.js"
+                                              "resources/js/vendor/lz-string/lz-string-1.3.3-min.js"]
+                                   :externs ["resources/js/vendor/react-0.10.0/react_with_addons.js"
+                                             "resources/js/vendor/lz-string/lz-string-1.3.3-min.js"]
                                    :closure-warnings {:externs-validation :off
                                                       :non-standard-jsdoc :off}}}]}
 )

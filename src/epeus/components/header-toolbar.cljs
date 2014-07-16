@@ -17,6 +17,19 @@
                      (assoc :children {}))
                 :create-restore-point))
 
+(defn download-document
+  "Generates compressed project file and triggers download event.
+
+  Highly inspired by https://github.com/jackschaedler/goya"
+  [state]
+  (let [download-link (. js/document (getElementById "document-download-link"))
+        content       (->> (get-in @state [:main :items])
+                           (pr-str)
+                           (.compressToBase64 js/LZString)
+                           (str "data:application/octet-stream;base64,"))]
+    (set! (.-href download-link) content)
+    (.click download-link)))
+
 ;;
 ;; Helpers
 ;;
@@ -53,9 +66,10 @@
         (go-loop []
                  (when-let [{:keys [command owner]} (<! commands)]
                    (case command
-                     :undo  (history/undo)
-                     :redo  (history/redo)
-                     :reset (reset-app-state state)
+                     :undo     (history/undo)
+                     :redo     (history/redo)
+                     :reset    (reset-app-state state)
+                     :download (download-document state)
                      nil)
                    (recur)))))
 

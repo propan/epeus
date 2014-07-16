@@ -156,6 +156,10 @@ body {
     padding: 8px 0;
 }
 
+#document-download-link {
+    display: none;
+}
+
 #browser-warning {
     position: absolute;
     top: 0;
