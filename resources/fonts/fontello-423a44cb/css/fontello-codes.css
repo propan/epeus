@@ -6,3 +6,6 @@
 .icon-cancel-circled:before { content: '\e804'; } /* '' */
 .icon-plus-circled:before { content: '\e805'; } /* '' */
 .icon-trash:before { content: '\e806'; } /* '' */
+.icon-download:before { content: '\e807'; } /* '' */
+.icon-upload:before { content: '\e808'; } /* '' */
+.icon-picture:before { content: '\e809'; } /* '' */
