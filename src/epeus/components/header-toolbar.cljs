@@ -6,7 +6,8 @@
             [om.dom :as dom :include-macros true]
             [epeus.events :refer [file-uploads]]
             [epeus.history :as history]
-            [epeus.utils :refer [get-by-id set-value]]))
+            [epeus.tree-utils :refer [apply-tree]]
+            [epeus.utils :refer [next-uid get-by-id set-value]]))
 ;;
 ;; Downloading/uploading documents was more than highly inspired by https://github.com/jackschaedler/goya
 ;;
@@ -50,6 +51,9 @@
 ;;
 ;; Helpers
 ;;
+(defn update-uid
+  [node]
+  (assoc node :uid (next-uid)))
 
 (defn toolbar-item-class
   [predicate]
@@ -59,7 +63,8 @@
 (defn load-state-from-string [state data]
   (let [items (->> (aget (.split data ",") 1)
                    (.decompressFromBase64 js/LZString)
-                   (reader/read-string))]
+                   (reader/read-string)
+                   (apply-tree update-uid))]
     (set-app-state! state items)
     (history/forget!)))
 

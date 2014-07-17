@@ -3,39 +3,12 @@
   (:require [cljs.core.async :as async :refer [chan tap]]
             [epeus.events :refer [mouse-down mouse-move mouse-up keyboard-alt]]
             [epeus.components.node :refer [node-component]]
+            [epeus.tree-utils :refer [map-nodes apply-tree apply-match]]
             [epeus.utils :as u :refer [element-bounds hidden next-uid now]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 
 (def INITIAL-COLORS ["#77E401" "#A345FF" "#FFDA45" "#FF8845" "#45FFD2" "#45D2FF" "#45ADFF" "#AD45FF" "#FFF045" "#FF45A6" "#FF5959"])
-
-(defn map-nodes
-  [f root]
-  (let [walk (fn walk [parent node]
-               (lazy-seq
-                (cons (f parent node)
-                      (mapcat (fn [[ k v]] (walk node v))
-                              (:children node)))))]
-    (walk nil root)))
-
-(defn apply-tree
-  [f root]
-  (let [walk (fn walk [node]
-               (-> (f node)
-                   (update-in [:children]
-                              #(reduce
-                                (fn [r [k v]] (assoc r k (walk v))) {} %))))]
-    (walk root)))
-
-(defn apply-match
-  [f root p]
-  (let [walk (fn walk [node]
-               (if (p node)
-                 (f node)
-                 (update-in node [:children]
-                            #(reduce
-                              (fn [r [k v]] (assoc r k (walk v))) {} %))))]
-    (walk root)))
 
 ;;
 ;; Helpers
