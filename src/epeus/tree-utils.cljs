@@ -5,7 +5,7 @@
   (let [walk (fn walk [parent node]
                (lazy-seq
                 (cons (f parent node)
-                      (mapcat (fn [[ k v]] (walk node v))
+                      (mapcat (fn [[k v]] (walk node v))
                               (:children node)))))]
     (walk nil root)))
 

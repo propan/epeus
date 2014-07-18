@@ -4,6 +4,7 @@
             [cljs.reader :as reader]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [epeus.draw :refer [draw-image]]
             [epeus.events :refer [file-uploads]]
             [epeus.history :as history]
             [epeus.tree-utils :refer [apply-tree]]
@@ -40,6 +41,14 @@
                            (pr-str)
                            (.compressToBase64 js/LZString)
                            (str "data:application/octet-stream;base64,"))]
+    (set! (.-href download-link) content)
+    (.click download-link)))
+
+(defn export-document-as-png
+  [state]
+  (let [download-link (get-by-id "image-download-link")
+        content       (-> (get-in @state [:main :items])
+                          (draw-image))]
     (set! (.-href download-link) content)
     (.click download-link)))
 
@@ -122,6 +131,7 @@
                      :download    (download-document state)
                      :upload      (choose-document)
                      :file-upload (handle-file-upload state data)
+                     :export      (export-document-as-png state)
                      nil)
                    (recur)))))
 
