@@ -38,6 +38,8 @@
 ;;
 
 (defn connection-points
+  "Returns a connection side and a list of connection points for two nodes
+   at (fx, fy) and (tx, ty) with bounds (fw, fh) and (tw, th) accordingly."
   [fx fy fw fh tx ty tw th]
   (let [fw2 (/ fw 2)]
     (if (< (+ tx tw) (+ fx fw2))
@@ -46,12 +48,12 @@
 
 (defn generate-path
   [[fx fy fw fh] [tx ty tw th]]
-  (let [[dir [sx sy] [ex ey]] (connection-points fx fy fw fh tx ty tw th)
-        dx (Math/max (Math/abs (/ (- sx ex) 2)) 10)
-        dy (Math/max (Math/abs (/ (- sy ey) 2)) 10)
-        path (if (= dir :left)
-               [(- sx dx) sy (+ ex dx) ey ex ey]
-               [(+ sx dx) sy (- ex dx) ey ex ey])]
+  (let [[side [sx sy] [ex ey]] (connection-points fx fy fw fh tx ty tw th)
+        dx                     (Math/max (Math/abs (/ (- sx ex) 2)) 10)
+        dy                     (Math/max (Math/abs (/ (- sy ey) 2)) 10)
+        path                   (if (= side :left)
+                                 [(- sx dx) sy (+ ex dx) ey ex ey]
+                                 [(+ sx dx) sy (- ex dx) ey ex ey])]
     (apply str ["M" (apply str 
                            (interpose "," [sx sy]))
                 "C" (apply str
