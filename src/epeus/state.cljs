@@ -10,7 +10,8 @@
     {
      :modified
      (now)
-     :items {:uid      -1
+     :items {:uid      0
+             :root?    true
              :title    "Mind Maps"
              :x        398
              :y        199

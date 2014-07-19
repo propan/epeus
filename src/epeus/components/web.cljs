@@ -127,13 +127,13 @@
             [x-position y-position]))))))
 
 (defn new-node
-  [{:keys [uid x y color children] :as parent} new-uid side offset]
+  [{:keys [uid x y color children root?] :as parent} new-uid side offset]
   (let [[nx ny] (best-position x y offset side children)]
     {:uid      new-uid
      :title    ""
      :x        nx
      :y        ny
-     :color    (if (= uid -1)
+     :color    (if root?
                  (rand-nth INITIAL-COLORS)
                  (randomize-shade color))
      :children {}}))

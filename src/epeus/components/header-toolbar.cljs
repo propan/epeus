@@ -27,7 +27,8 @@
 (defn reset-app-state!
   [state]
   (set-app-state! state
-                  {:uid      -1
+                  {:uid      (next-uid)
+                   :root?    true
                    :title    ""
                    :x        400
                    :y        200

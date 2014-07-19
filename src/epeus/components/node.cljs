@@ -231,9 +231,8 @@
     
     om/IRenderState
     (render-state [_ {:keys [alt comm dragging edit-title editing hover-node hover-action]}]
-      (let [{:keys [x y color title uid position]} node
+      (let [{:keys [x y color title uid position root?]} node
             events                                 (:events comm)
-            root?                                  (= uid -1)
             actionable                             (and (or hover-node hover-action)
                                                         (not (or editing dragging)))
             empty                                  (string/blank? (.trim title))
