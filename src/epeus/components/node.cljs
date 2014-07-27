@@ -31,12 +31,15 @@
 ;; Positioning
 ;;
 
-(defn get-button-position
-  [[w h] side root?]
-  (let [offset-y (if root? -3 0)]
-    (if (= side :left)
-      [-23 (- (/ h 2) 11 offset-y)]
-      [w   (- (/ h 2) 11 offset-y)])))
+(defn calculate-button-position
+  [owner side root?]
+  (if-let [[w h] (om/get-state owner :bounds)]
+    (let [offset-x (if root?  7 0)
+          offset-y (if root? -3 0)]
+      (if (= side :left)
+        [(+ offset-x -23) (- (/ h 2) 11 offset-y)]
+        [w                (- (/ h 2) 11 offset-y)]))
+    [0 0]))
 
 ;;
 ;; Interaction
@@ -157,6 +160,24 @@
 ;; Component
 ;;
 
+(defn render-action-button
+  [owner events {:keys [color root?] :as node} side actionable alt]
+  (let [[left top] (calculate-button-position owner side root?)]
+    (dom/div #js {:ref "action-button"
+                  :className "action-button"
+                  :style #js {:backgroundColor (when-not root? color)
+                              :top             top
+                              :left            left
+                              :display         (if actionable "inline-block" "none")}
+                  ;; prevent event propagation to web-node onMouseDown
+                  :onMouseDown #(.stopPropagation %)
+                  :onMouseOver #(mouse-enter-action % owner events)
+                  :onMouseOut  #(mouse-leave-action % owner events)
+                  :onClick     #(execute-action % node side owner events)}
+             (dom/img #js {:src (if (true? alt)
+                                  "resources/images/minus.svg"
+                                  "resources/images/plus.svg")}))))
+
 (defn node-component
   [node owner]
   (reify
@@ -232,13 +253,10 @@
     om/IRenderState
     (render-state [_ {:keys [alt comm dragging edit-title editing hover-node hover-action]}]
       (let [{:keys [x y color title uid position root?]} node
-            events                                 (:events comm)
-            actionable                             (and (or hover-node hover-action)
-                                                        (not (or editing dragging)))
-            empty                                  (string/blank? (.trim title))
-            [button-left button-top]               (if-let [bounds (om/get-state owner :bounds)]
-                                                     (get-button-position bounds position root?)
-                                                     [0 0])]
+            events                                       (:events comm)
+            actionable                                   (and (or hover-node hover-action)
+                                                              (not (or editing dragging)))
+            empty                                        (string/blank? (.trim title))]
         (dom/div #js {:className   (str (if root? "root-node" "web-node") (when dragging " dragging"))
                       :style #js   {:top y :left x :color (when-not root? color)}
                       :onMouseDown #(drag-start % node owner)
@@ -256,17 +274,6 @@
                                  :onKeyDown #(key-down % node owner events)
                                  :onChange  #(change % node owner)
                                  :onBlur    #(commit-changes % node owner events)})
-                 (dom/div #js {:ref "action-button"
-                               :className "action-button"
-                               :style #js {:backgroundColor (when-not root? color)
-                                           :top             button-top
-                                           :left            button-left
-                                           :display         (if actionable "inline-block" "none")}
-                               ;; prevent event propagation to web-node onMouseDown
-                               :onMouseDown #(.stopPropagation %)
-                               :onMouseOver #(mouse-enter-action % owner events)
-                               :onMouseOut  #(mouse-leave-action % owner events)
-                               :onClick     #(execute-action % node position owner events)} ;; wtf?
-                          (dom/img #js {:src (if (true? alt)
-                                               "resources/images/minus.svg"
-                                               "resources/images/plus.svg")})))))))
+                 (when root?
+                   (render-action-button owner events node :left actionable alt))
+                 (render-action-button owner events node position actionable alt))))))
