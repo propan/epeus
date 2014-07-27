@@ -15,7 +15,7 @@
              :title    "Mind Maps"
              :x        398
              :y        199
-             :color    "#67d7c4"
+             :color    "#c0c0c0"
              :children {1 {:uid      1
                            :title    "communicate"
                            :x        531

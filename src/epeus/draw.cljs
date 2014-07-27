@@ -70,7 +70,7 @@
     (let [[fw fh] (get graph (:uid from))
           [tw th] (get graph (:uid to))]
       (aset context "strokeStyle" (:color to))
-      (aset context "lineWidth" 2)
+      (aset context "lineWidth" 3)
       (draw-node-connection context
                             [(- (:x from) off-x) (- (:y from) off-y) fw fh]
                             [(- (:x to) off-x)   (- (:y to) off-y)   tw th]))))

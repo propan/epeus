@@ -32,7 +32,7 @@
                    :title    ""
                    :x        400
                    :y        200
-                   :color    "#67d7c4"
+                   :color    "#c0c0c0"
                    :children {}}))
 
 (defn download-document

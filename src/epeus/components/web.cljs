@@ -190,7 +190,7 @@
     (render-state [_ _]
       (let [{:keys [from-rect to-rect color]} state]
         (dom/path #js {:d           (generate-path from-rect to-rect)
-                       :strokeWidth "2"
+                       :strokeWidth "3"
                        :stroke      color
                        :fill        "none"})))))
 
