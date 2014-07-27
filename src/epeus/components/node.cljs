@@ -143,13 +143,13 @@
       (put! events [:add [node position]]))))
 
 (defn mouse-enter-action
-  [e owner events]
+  [e owner root? events]
   (om/set-state! owner :hover-action true)
   (when e
     (.stopPropagation e))
-  (if (om/get-state owner :alt)
+  (if (and (om/get-state owner :alt) (not root?))
     (put! events [:tooltip "click to remove or release <alt> to branch out"])
-    (put! events [:tooltip "click to branch out or hold <alt> to remove"])))
+    (put! events [:tooltip (str "click to branch out" (when-not root? " or hold <alt> to remove"))])))
 
 (defn mouse-leave-action
   [e owner events]
@@ -171,10 +171,10 @@
                               :display         (if actionable "inline-block" "none")}
                   ;; prevent event propagation to web-node onMouseDown
                   :onMouseDown #(.stopPropagation %)
-                  :onMouseOver #(mouse-enter-action % owner events)
+                  :onMouseOver #(mouse-enter-action % owner root? events)
                   :onMouseOut  #(mouse-leave-action % owner events)
                   :onClick     #(execute-action % node side owner events)}
-             (dom/img #js {:src (if (true? alt)
+             (dom/img #js {:src (if (and (true? alt) (not root?))
                                   "resources/images/minus.svg"
                                   "resources/images/plus.svg")}))))
 
@@ -214,7 +214,7 @@
                      alt  (do
                             (om/set-state! owner :alt v)
                             (when (om/get-state owner :hover-action)
-                              (mouse-enter-action nil owner events))
+                              (mouse-enter-action nil owner (:root? @node) events))
                             (recur))
                      dim  (do
                             (put! events [:dim [(:uid @node) v]])
