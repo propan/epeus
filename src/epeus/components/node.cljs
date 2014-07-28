@@ -252,11 +252,11 @@
     
     om/IRenderState
     (render-state [_ {:keys [alt comm dragging edit-title editing hover-node hover-action]}]
-      (let [{:keys [x y color title uid position root?]} node
-            events                                       (:events comm)
-            actionable                                   (and (or hover-node hover-action)
-                                                              (not (or editing dragging)))
-            empty                                        (string/blank? (.trim title))]
+      (let [{:keys [x y color title position has-kids? root?]} node
+            events                                             (:events comm)
+            actionable                                         (and (or hover-node hover-action)
+                                                                    (not (or editing dragging)))
+            empty                                              (string/blank? (.trim title))]
         (dom/div #js {:className   (str (if root? "root-node" "web-node") (when dragging " dragging"))
                       :style #js   {:top y :left x :color (when-not root? color)}
                       :onMouseDown #(drag-start % node owner)

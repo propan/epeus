@@ -232,10 +232,11 @@
                                        {:react-key (str "link-" (:uid from) "-" (:uid to))}))))
                        items))
                (map-nodes
-                (fn [parent node]
+                (fn [parent {:keys [children] :as node}]
                   (om/build node-component (-> node
                                                (dissoc :children)
-                                               (assoc  :position (child-position graph parent node))) ;; I'm not quite sure it's the way to go..
+                                               (assoc  :position  (child-position graph parent node)
+                                                       :has-kids? (not (empty? children)))) ;; I'm not quite sure it's the way to go..
                             {:init-state {:comm comm}
                              :react-key  (:uid node)}))
                 items))))))
