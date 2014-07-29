@@ -258,14 +258,16 @@
                                                                     (not (or editing dragging)))
             empty                                              (string/blank? (.trim title))]
         (dom/div #js {:className   (str (if root? "root-node" "web-node") (when dragging " dragging"))
-                      :style #js   {:top y :left x :color (when-not root? color)}
+                      :style #js   {:top y :left x :color (when-not root? (u/darken color 0.35))}
                       :onMouseDown #(drag-start % node owner)
                       :onMouseUp   #(drag-stop % node owner events)
                       :onMouseOver #(mouse-enter % owner events)
                       :onMouseOut  #(mouse-leave % node owner events)}
                  (dom/div #js {:ref       "label"
                                :className (if empty "node-empty-label" "node-label")
-                               :style     (hidden editing)
+                               :style     (if (and has-kids? (not root?))
+                                            #js {:position "relative" :top -15 :left -10 :display (when editing "none")}
+                                            #js {:display (when editing "none")})
                                :onClick   #(edit-start node owner events)}
                           (if empty "[click to edit]" title))
                  (dom/input #js {:ref       "edit-field"

@@ -21,9 +21,12 @@
     (u/darken color 0.05)))
 
 (defn create-rect
-  [dims {:keys [x y uid]}]
+  [dims {:keys [x y uid children root?]}]
   (when-let [dim (get dims uid)]
-    (into [x y] dim)))
+    (-> [x y]
+        (into dim)
+        (conj (not (empty? children)))
+        (conj root?))))
 
 (defn child-position
   [graph {px :x py :y puid :uid} {cx :x cy :y cuid :uid}]
@@ -40,15 +43,19 @@
 (defn connection-points
   "Returns a connection side and a list of connection points for two nodes
    at (fx, fy) and (tx, ty) with bounds (fw, fh) and (tw, th) accordingly."
-  [fx fy fw fh tx ty tw th]
+  [[fx fy fw fh fk? fr?] [tx ty tw th tk? tr?]]
   (let [fw2 (/ fw 2)]
     (if (< (+ tx tw) (+ fx fw2))
-      [:left  [fx (+ fy (/ fh 2))] [(+ tx tw) (+ ty (/ th 2))]]
-      [:right [(+ fx fw) (+ fy (/ fh 2))] [tx (+ ty (/ th 2))]])))
+      (let [rx  (if tk? (+ tx (/ tw 2)) (+ tx tw))
+            lx  (if (and fk? (not fr?)) (+ fx (/ fw 2)) fx)]
+        [:left  [lx (+ fy (/ fh 2))] [rx (+ ty (/ th 2))]])
+      (let [rx (if tk? (+ tx (/ tw 2)) tx)
+            lx (if (and fk? (not fr?)) (+ fx (/ fw 2)) (+ fx fw))]
+        [:right [lx (+ fy (/ fh 2))] [rx (+ ty (/ th 2))]]))))
 
 (defn generate-path
-  [[fx fy fw fh] [tx ty tw th]]
-  (let [[side [sx sy] [ex ey]] (connection-points fx fy fw fh tx ty tw th)
+  [from to]
+  (let [[side [sx sy] [ex ey]] (connection-points from to)
         dx                     (Math/max (Math/abs (/ (- sx ex) 2)) 10)
         dy                     (Math/max (Math/abs (/ (- sy ey) 2)) 10)
         path                   (if (= side :left)
