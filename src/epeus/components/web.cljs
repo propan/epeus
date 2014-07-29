@@ -10,6 +10,8 @@
 
 (def INITIAL-COLORS ["#77E401" "#A345FF" "#FFDA45" "#FF8845" "#45FFD2" "#45D2FF" "#45ADFF" "#AD45FF" "#FFF045" "#FF45A6" "#FF5959"])
 
+(defrecord NodeProps [x y width height root? kids?])
+
 ;;
 ;; Helpers
 ;;
@@ -22,11 +24,8 @@
 
 (defn create-rect
   [dims {:keys [x y uid children root?]}]
-  (when-let [dim (get dims uid)]
-    (-> [x y]
-        (into dim)
-        (conj (not (empty? children)))
-        (conj root?))))
+  (when-let [[w h] (get dims uid)]
+    (NodeProps. x y w h root? (not (empty? children)))))
 
 (defn child-position
   [graph {px :x py :y puid :uid} {cx :x cy :y cuid :uid}]
@@ -41,16 +40,24 @@
 ;;
 
 (defn connection-points
-  "Returns a connection side and a list of connection points for two nodes
-   at (fx, fy) and (tx, ty) with bounds (fw, fh) and (tw, th) accordingly."
-  [[fx fy fw fh fk? fr?] [tx ty tw th tk? tr?]]
+  "Returns a connection side and a list of connection points for two nodes."
+  [{fx :x fy :y fw :width fh :height fk? :kids? fr? :root?}
+   {tx :x ty :y tw :width th :height tk? :kids? tr? :root?}]
   (let [fw2 (/ fw 2)]
     (if (< (+ tx tw) (+ fx fw2))
-      (let [rx  (if tk? (+ tx (/ tw 2)) (+ tx tw))
-            lx  (if (and fk? (not fr?)) (+ fx (/ fw 2)) fx)]
+      (let [rx  (if tk?
+                  (+ tx (/ tw 2))
+                  (+ tx tw))
+            lx  (if (and fk? (not fr?))
+                  (+ fx (/ fw 2))
+                  fx)]
         [:left  [lx (+ fy (/ fh 2))] [rx (+ ty (/ th 2))]])
-      (let [rx (if tk? (+ tx (/ tw 2)) tx)
-            lx (if (and fk? (not fr?)) (+ fx (/ fw 2)) (+ fx fw))]
+      (let [rx (if tk?
+                 (+ tx (/ tw 2))
+                 tx)
+            lx (if (and fk? (not fr?))
+                 (+ fx (/ fw 2))
+                 (+ fx fw))]
         [:right [lx (+ fy (/ fh 2))] [rx (+ ty (/ th 2))]]))))
 
 (defn generate-path
@@ -193,13 +200,25 @@
 (defn path-component
   [state owner]
   (reify
-    om/IRenderState
-    (render-state [_ _]
+    om/IRender
+    (render [_]
       (let [{:keys [from-rect to-rect color]} state]
         (dom/path #js {:d           (generate-path from-rect to-rect)
                        :strokeWidth "3"
                        :stroke      color
                        :fill        "none"})))))
+
+(defn path-marker
+  [state owner]
+  (reify
+    om/IRender
+    (render [_ ]
+      (let [{:keys [node color]} state
+            {:keys [x y width height]}  node]
+        (dom/circle #js {:cx   (+ x (/ width 2))
+                         :cy   (+ y (/ height 2))
+                         :r    3
+                         :fill color})))))
 
 (defn web-component
   [state owner]
@@ -228,16 +247,25 @@
                                    :height 5000
                                    :style  #js {:overflow "hidden"
                                                 :z-index  0}}
-                      (map-nodes
-                       (fn [from to]
-                         (let [from-rect (create-rect graph from)
-                               to-rect   (create-rect graph to)]
-                           (when (and from-rect to-rect)
-                             (om/build path-component {:color     (:color to)
-                                                       :from-rect from-rect
-                                                       :to-rect   to-rect}
-                                       {:react-key (str "link-" (:uid from) "-" (:uid to))}))))
-                       items))
+                      (concat
+                       (map-nodes
+                        (fn [from to]
+                          (let [from-rect (create-rect graph from)
+                                to-rect   (create-rect graph to)]
+                            (when (and from-rect to-rect)
+                              (om/build path-component {:color     (:color to)
+                                                        :from-rect from-rect
+                                                        :to-rect   to-rect}
+                                        {:react-key (str "link-" (:uid from) "-" (:uid to))}))))
+                        items)
+                       (map-nodes
+                        (fn [from to]
+                          (let [rect (create-rect graph to)]
+                            (when (and rect (:kids? rect) (not (:root? rect)))
+                              (om/build path-marker {:node  rect
+                                                     :color (u/darken (:color to) 0.1)}
+                                        {:react-key (str "marker-" (:uid to))}))))
+                        items)))
                (map-nodes
                 (fn [parent {:keys [children] :as node}]
                   (om/build node-component (-> node
