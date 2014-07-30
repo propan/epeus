@@ -43,22 +43,13 @@
   "Returns a connection side and a list of connection points for two nodes."
   [{fx :x fy :y fw :width fh :height fk? :kids? fr? :root?}
    {tx :x ty :y tw :width th :height tk? :kids? tr? :root?}]
-  (let [fw2 (/ fw 2)]
-    (if (< (+ tx tw) (+ fx fw2))
-      (let [rx  (if tk?
-                  (+ tx (/ tw 2))
-                  (+ tx tw))
-            lx  (if (and fk? (not fr?))
-                  (+ fx (/ fw 2))
-                  fx)]
-        [:left  [lx (+ fy (/ fh 2))] [rx (+ ty (/ th 2))]])
-      (let [rx (if tk?
-                 (+ tx (/ tw 2))
-                 tx)
-            lx (if (and fk? (not fr?))
-                 (+ fx (/ fw 2))
-                 (+ fx fw))]
-        [:right [lx (+ fy (/ fh 2))] [rx (+ ty (/ th 2))]]))))
+  (let [sy (+ fy (/ fh 2))
+        ey (+ ty (/ th 2))]
+    (if (< (+ tx tw) fx)
+      (let [ex (if tk? tx (+ tx tw))]
+        [:left [fx sy] [ex ey]])
+      (let [sx (if fr? (+ fx fw) fx)]
+        [:right [sx sy] [tx ey]]))))
 
 (defn generate-path
   [from to]
@@ -214,8 +205,8 @@
     om/IRender
     (render [_ ]
       (let [{:keys [node color]} state
-            {:keys [x y width height]}  node]
-        (dom/circle #js {:cx   (+ x (/ width 2))
+            {:keys [x y height]}  node]
+        (dom/circle #js {:cx   x
                          :cy   (+ y (/ height 2))
                          :r    3
                          :fill color})))))

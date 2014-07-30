@@ -93,6 +93,10 @@ body {
     cursor: -webkit-grab;
 }
 
+.web-node .edit-field {
+    z-index: 1000;
+}
+
 .root-node {
     font-size: 18px;
     padding: 4px;
