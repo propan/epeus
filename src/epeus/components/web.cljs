@@ -28,12 +28,8 @@
     (NodeProps. x y w h root? (not (empty? children)))))
 
 (defn child-position
-  [graph {px :x py :y puid :uid} {cx :x cy :y cuid :uid}]
-  (let [[pw ph] (get graph puid)
-        [cw ch] (get graph cuid)]
-    (if (and pw ph cw ch (< (+ cx cw) (+ px (/ pw 2))))
-      :left
-      :right)))
+  [graph {px :x} {cx :x}]
+  (if (< cx px) :left :right))
 
 ;;
 ;; Draw
@@ -41,15 +37,13 @@
 
 (defn connection-points
   "Returns a connection side and a list of connection points for two nodes."
-  [{fx :x fy :y fw :width fh :height fk? :kids? fr? :root?}
-   {tx :x ty :y tw :width th :height tk? :kids? tr? :root?}]
-  (let [sy (+ fy (/ fh 2))
-        ey (+ ty (/ th 2))]
-    (if (< (+ tx tw) fx)
-      (let [ex (if tk? tx (+ tx tw))]
-        [:left [fx sy] [ex ey]])
-      (let [sx (if fr? (+ fx fw) fx)]
-        [:right [sx sy] [tx ey]]))))
+  [{fx :x fy :y fw :width fh :height fr? :root?}
+   {tx :x ty :y tw :width th :height tr? :root?}]
+  (let [sy (if fr? (+ fy (/ fh 2)) fy)
+        sx (if fr? (+ fx fw) fx)]
+    (if (< tx fx)
+      [:left [fx sy] [tx ty]]
+      [:right [sx sy] [tx ty]])))
 
 (defn generate-path
   [from to]
@@ -207,7 +201,7 @@
       (let [{:keys [node color]} state
             {:keys [x y height]}  node]
         (dom/circle #js {:cx   x
-                         :cy   (+ y (/ height 2))
+                         :cy   y
                          :r    3
                          :fill color})))))
 

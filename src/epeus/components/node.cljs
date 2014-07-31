@@ -33,16 +33,13 @@
 
 (defn calculate-button-position
   ;; BEWARE OF MAGIC NUMBERS!
-  [owner side has-kids? root?]
-  (if-let [[w h] (om/get-state owner :bounds)]
-    (let [offset-x (if root?  7 0)
-          offset-y (if root? -3 0)]
-      (if (and has-kids? (not root?))
-        [-12 (- (/ h 2) 12)]
-        (if (= side :left)
-          [(+ offset-x -23) (- (/ h 2) 11 offset-y)]
-          [w                (- (/ h 2) 11 offset-y)])))
-    [0 0]))
+  [owner side root?]
+  (if root?
+    (let [[w h] (om/get-state owner :bounds)]
+      (case side
+        :left  [-12     3]
+        :right [(- w 3) 3]))
+    [-12 -12]))
 
 ;;
 ;; Interaction
@@ -164,8 +161,8 @@
 ;;
 
 (defn render-action-button
-  [owner events {:keys [color has-kids? root?] :as node} side actionable alt]
-  (let [[left top] (calculate-button-position owner side has-kids? root?)]
+  [owner events {:keys [color root?] :as node} side actionable alt]
+  (let [[left top] (calculate-button-position owner side root?)]
     (dom/div #js {:ref "action-button"
                   :className "action-button"
                   :style #js {:backgroundColor (when-not root? color)
@@ -267,17 +264,18 @@
                       :onMouseOver #(mouse-enter % owner events)
                       :onMouseOut  #(mouse-leave % node owner events)}
                  (dom/div #js {:ref       "label"
-                               :className (if empty "node-empty-label" "node-label")
-                               :style     (if (and has-kids? (not root?))
-                                            #js {:position "relative" :top -15 :display (when editing "none")}
-                                            #js {:display (when editing "none")})
+                               :className (str "node-label"
+                                               (when empty " empty")
+                                               (when (not root?) (str " " (name position)))
+                                               (when has-kids? " haskids"))
+                               :style     (hidden editing)
                                :onClick   #(edit-start node owner events)}
                           (if empty "[click to edit]" title))
                  (dom/input #js {:ref       "edit-field"
-                                 :className "edit-field"
-                                 :style     (if (and has-kids? (not root?))
-                                              #js {:position "relative" :top -15 :display (when-not editing "none")}
-                                              #js {:display (when-not editing "none")})
+                                 :className (str "edit-field"
+                                                 (when (not root?) (str " " (name position)))
+                                                 (when has-kids? " haskids"))
+                                 :style     (hidden (not editing))
                                  :value     edit-title
                                  :onKeyDown #(key-down % node owner events)
                                  :onChange  #(change % node owner)
