@@ -91,6 +91,11 @@ body {
     cursor: grab;
     cursor: -moz-grab;
     cursor: -webkit-grab;
+    white-space: nowrap;
+}
+
+.web-node .edit-field {
+    z-index: 1000;
 }
 
 .root-node {
@@ -104,10 +109,6 @@ body {
     -ms-border-radius: 5px;
     -o-border-radius: 5px;
     border: 2px solid rgba(255,255,255,0.4);
-}
-
-.root-node .node-empty-label {
-    color: #505050;
 }
 
 .root-node .action-button {
@@ -130,8 +131,48 @@ body {
     height: 20px;
 }
 
-.node-empty-label {
+.node-label {
+    position: relative;
+}
+
+.root-node .node-label.empty {
+    color: #505050;
+}
+
+.web-node .node-label.empty {
     color: #c0c0c0;
+}
+
+.right {
+    -webkit-transform: translate(0, -65%);
+    -moz-transform: translate(0, -65%);
+    -ms-transform: translate(0, -65%);
+    -o-transform: translate(0, -65%);
+    transform: translate(0, -65%);
+}
+
+.left {
+    -webkit-transform: translate(-100%, -65%);
+    -moz-transform: translate(-100%, -65%);
+    -ms-transform: translate(-100%, -65%);
+    -o-transform: translate(-100%, -65%);
+    transform: translate(-100%, -65%);
+}
+
+.right.haskids {
+    -webkit-transform: translate(-80%, -120%);
+    -moz-transform: translate(-80%, -120%);
+    -ms-transform: translate(-80%, -120%);
+    -o-transform: translate(-80%, -120%);
+    transform: translate(-80%, -120%);
+}
+
+.left.haskids {
+    -webkit-transform: translate(-20%, -120%);
+    -moz-transform: translate(-20%, -120%);
+    -ms-transform: translate(-20%, -120%);
+    -o-transform: translate(-20%, -120%);
+    transform: translate(-20%, -120%);
 }
 
 .dragging {
