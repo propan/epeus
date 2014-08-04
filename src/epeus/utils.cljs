@@ -20,6 +20,10 @@
   [id]
   (. js/document (getElementById id)))
 
+(defn scroll-to
+  "Scrolls the given containter to the element inside that container."
+  [container element center]
+  (style/scrollIntoContainerView element container center))
 
 (defn set-value
   [el val]

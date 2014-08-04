@@ -195,6 +195,8 @@
 
     om/IDidMount
     (did-mount [_]
+      (when (:root? node)
+        (u/scroll-to (. js/document (getElementById "web-container")) (om/get-node owner) true))
       ;; something is wrong here
       (let [comm    (om/get-state owner :comm)
             alt-ch  (chan)

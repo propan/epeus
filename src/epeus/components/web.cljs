@@ -228,8 +228,8 @@
       (let [items (get-in state [:main :items])
             graph (:graph state)]
         (apply dom/div #js {:id "web-container"}
-               (apply dom/svg #js {:width  5000
-                                   :height 5000
+               (apply dom/svg #js {:width  10000
+                                   :height 10000
                                    :style  #js {:overflow "hidden"
                                                 :z-index  0}}
                       (concat
