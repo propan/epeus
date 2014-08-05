@@ -208,6 +208,10 @@
 (defn web-component
   [state owner]
   (reify
+    om/IInitState
+    (init-state [_]
+      {:parent (. js/document (getElementById "document-container"))})
+
     om/IWillMount
     (will-mount [_]
       (let [events (chan)
@@ -224,10 +228,19 @@
 ;; TODO: unmount
 
     om/IRenderState
-    (render-state [_ {:keys [comm]}]
-      (let [items (get-in state [:main :items])
-            graph (:graph state)]
-        (apply dom/div #js {:id "web-container"}
+    (render-state [_ {:keys [comm parent]}]
+      (let [items      (get-in state [:main :items])
+            graph      (:graph state)
+            scale      (/ (:zoom state) 100.0)
+            size-scale (str (/ 100 scale) "%")
+            [w h]      (u/element-bounds parent)]
+        (apply dom/div #js {:id "web-container"
+                            :style #js {:transform         (str "scale(" scale ")")
+                                        :-webkit-transform (str "scale(" scale ")")
+                                        :width             size-scale
+                                        :height            size-scale
+                                        :left              (/ (- w (/ w scale)) 2)
+                                        :top               (/ (- h (/ h scale)) 2)}}
                (apply dom/svg #js {:width  10000
                                    :height 10000
                                    :style  #js {:overflow "hidden"

@@ -58,6 +58,26 @@
   (let [document-chooser (get-by-id "document-chooser")]
     (.click document-chooser)))
 
+(defn zoom-mouse-enter
+  [e owner]
+  (om/set-state! owner :hidden false))
+
+(defn zoom-mouse-leave
+  [e owner]
+  (om/set-state! owner :hidden true))
+
+(defn zoom-in
+  [state]
+  (om/transact! state [:zoom] #(if (< % 250) (+ % 25) %)))
+
+(defn zoom-out
+  [state]
+  (om/transact! state [:zoom] #(if (> % 25) (- % 25) %)))
+
+(defn zoom-reset
+  [state]
+  (om/update! state [:zoom] 100))
+
 ;;
 ;; Helpers
 ;;
@@ -100,6 +120,35 @@
 ;;
 ;; Components
 ;;
+(defn zoom-button-component
+  [state owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:hidden   true})
+
+    om/IRenderState
+    (render-state [_ {:keys [hidden]}]
+      (dom/div #js {:className "toolbar-item"
+                    :onMouseOver #(zoom-mouse-enter % owner)
+                    :onMouseOut  #(zoom-mouse-leave % owner)}
+               (dom/i #js {:className   (if (< (:zoom state) 100)
+                                          "icon-zoom-out"
+                                          "icon-zoom-in")})
+               (dom/div #js {:className "zoom-toolbar"
+                             :style #js {:display (when hidden "none")}}
+                        (dom/a #js {:className "button"
+                                    :onClick   #(zoom-out state)}
+                               "-")
+                        (dom/span #js {:className "label"}
+                                  (str (:zoom state) "%"))
+                        (dom/a #js {:className "button"
+                                    :onClick   #(zoom-in state)}
+                               "+")
+                        (dom/a #js {:className "button reset"
+                                    :onClick   #(zoom-reset state)}
+                               "reset"))))))
+
 (defn button-component
   [item owner]
   (reify
@@ -149,6 +198,7 @@
                           :type    "icon-redo"
                           :command :redo}
                          {:init-state {:commands commands}})
+               (om/build zoom-button-component state)
                (om/build button-component
                          {:class   "toolbar-item"
                           :type    "icon-trash"

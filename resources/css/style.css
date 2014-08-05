@@ -3,6 +3,7 @@
 body {
 	background-color: #F5F5F5;
     margin: 0;
+    font-family: 'Lato';
 }
 
 .container {
@@ -27,7 +28,6 @@ body {
 .application-version {
     float: left;
     padding-top: 25px;
-    font-family: 'Lato';
     font-size: 10px;
     margin-left: -5px;
     color: #444;
@@ -56,6 +56,29 @@ body {
     cursor: not-allowed;
 }
 
+.zoom-toolbar {
+    position: absolute;
+    top: 50;
+    background-color: #EEEEEE;
+    border: 1px solid #E2E2E2;
+    font-size: 14px;
+    z-index: 500;
+}
+
+.zoom-toolbar .button, .zoom-toolbar .label {
+    display: inline-block;
+    padding: 5px 10px;
+}
+
+.zoom-toolbar a:hover {
+    background-color: #c0c0c0;
+    color: #FFFFFF;
+}
+
+.zoom-toolbar .reset {
+    border-left: 1px solid #E2E2E2;
+}
+
 .inner:before, .inner:after {
     clear: both;
     content: " ";
@@ -67,7 +90,6 @@ body {
 }
 
 #document-container {
-    font-family: 'Lato';
     overflow: hidden;
     position: absolute;
     top: 50px;

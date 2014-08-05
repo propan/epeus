@@ -6,6 +6,8 @@
    {:graph
     {}
 
+    :zoom 100
+
     :main
     {
      :modified
