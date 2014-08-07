@@ -18,16 +18,19 @@ body {
 }
 
 .application-title {
-    float: left;
+    position: absolute;
     font-family: 'Crafty Girls';
-    font-size: 30px;
-    padding: 4px 10px 2px; 
+    font-size: 40px;
+    left: 0;
+    top: 0;
+    margin: -7px 10px 0 15px;
     color: #555;
 }
 
 .application-version {
-    float: left;
-    padding-top: 25px;
+    position: absolute;
+    left: 140px;
+    padding-top: 22px;
     font-size: 10px;
     margin-left: -5px;
     color: #444;
@@ -35,16 +38,16 @@ body {
 
 .toolbar {
     float: right;
-    padding-right: 30px;
+    padding-right: 20px;
 }
 
 .toolbar-item {
     float: left;
     cursor: pointer;
     color: #C5C5C5;
-    font-size: 25px;
-    margin: 0 4px;
-    padding: 15px 0 10px;
+    font-size: 18px;
+    margin: 0 2px;
+    padding: 10px 0 10px;
 }
 
 .toolbar-item:hover {
@@ -58,7 +61,7 @@ body {
 
 .zoom-toolbar {
     position: absolute;
-    top: 50;
+    top: 38px;
     background-color: #EEEEEE;
     border: 1px solid #E2E2E2;
     font-size: 14px;
@@ -92,7 +95,7 @@ body {
 #document-container {
     overflow: hidden;
     position: absolute;
-    top: 50px;
+    top: 38px;
     bottom: 0;
     left: 0;
     right: 0;
