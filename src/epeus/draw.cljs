@@ -1,5 +1,6 @@
 (ns epeus.draw
-  (:require [epeus.tree-utils :refer [map-nodes]]))
+  (:require [epeus.tree-utils :refer [map-nodes]]
+            [epeus.utils :refer [darken]]))
 
 (def FONT-SIZE 8)
 (def NODE-TEXT-FONT "16px Lato")
@@ -9,54 +10,80 @@
   [context text]
   (.-width (.measureText context text)))
 
-(defn- adjust-bounds
+(defn- build-node-data
+  [context {fx :x} {:keys [x y uid title children root? color]}]
+  (let [side      (if (< x fx) :left :right)
+        has-kids? (not (empty? children))
+        width     (text-width context title)]
+    (vector uid {:x  x
+                 :y  y
+                 :title title
+                 :tx (cond
+                      root?                 x
+                      (and (not has-kids?)
+                           (= side :left))  (- x width)
+                      (and has-kids?
+                           (= side :left))  (- x (* 0.2 width))
+                      (and has-kids?
+                           (= side :right)) (- x (* 0.8 width))
+                      :else                 x)
+                 :ty (cond
+                      root?     (+ y (* 1.15 FONT-SIZE))
+                      has-kids? (- y (* 1.2 FONT-SIZE))
+                      :else     (+ y (* 0.65 FONT-SIZE)))
+                 :r? root?
+                 :w  width
+                 :c  color
+                 :h  FONT-SIZE
+                 :k? has-kids?
+                 :s  side})))
+
+(defn- build-dimensions
+  [context items]
+  (aset context "font" NODE-TEXT-FONT)
+  (into {} (map-nodes (partial build-node-data context) items)))
+
+(defn- adjust-stats
   [[minx miny maxx maxy] [lx ly rx ry]]
   (vector (min minx lx) (min miny ly) (max maxx rx) (max maxy ry)))
 
-(defn- node-bounds
-  [context parent {:keys [uid x y title]}]
-  (let [width (text-width context title)]
-    (vector x y (+ x width) (+ y FONT-SIZE))))
+(defn- node-stats
+  [[_ {:keys [tx ty w h]}]]
+  [tx ty (+ tx w) (+ ty h)])
 
-(defn calculate-bounds
-  [context items]
-  (aset context "font" NODE-TEXT-FONT)
-  (let [properties (map-nodes (partial node-bounds context) items)]
-    (reduce adjust-bounds properties)))
+(defn- calculate-canvas-stats
+  [dimensions]
+  (->> dimensions
+       (map node-stats)
+       (reduce adjust-stats)))
 
-(defn calculate-canvas-size
+(defn- calculate-canvas-size
   [minx miny maxx maxy]
   (vector (+ (* 2 IMAGE-MARGIN) (- maxx minx))
           (+ IMAGE-MARGIN       (- maxy miny))))
 
-(defn draw-node
-  [context off-x off-y graph {:keys [x y title color uid]}]
+(defn- draw-node
+  [context {:keys [tx ty title c] :as n}]
   (doto context
     (aset "font" NODE-TEXT-FONT)
-    (aset "fillStyle" color)
-    (.fillText title (- x off-x) (- y off-y)))
-  (let [width (text-width context title)]
-    (assoc graph uid [width FONT-SIZE])))
+    (aset "fillStyle" (darken c 0.15))
+    (.fillText title tx ty)))
 
-(defn draw-nodes
-  [context off-x off-y items]
-  (reduce (partial draw-node context off-x off-y) {} (map-nodes (fn [p n] n) items)))
+(defn- connection-points
+  [fx fy fw fh fr? tx ty side]
+  (let [sx (if fr? (+ fx fw) fx)
+        sy (if fr? (+ fy (/ fh 2)) fy)]
+    (if (= side :left)
+      [[fx sy] [tx ty]]
+      [[sx sy] [tx ty]])))
 
-(defn connection-points
-  "Returns a connection side and a list of connection points for two nodes
-   at (fx, fy) and (tx, ty) with bounds (fw, fh) and (tw, th) accordingly."
-  [fx fy fw fh tx ty tw th]
-  (let [fw2 (/ fw 2)]
-    (if (< (+ tx tw) (+ fx fw2))
-      [:left  [fx        (- fy 5)] [(+ tx tw) (- ty 5)]]
-      [:right [(+ fx fw) (- fy 5)] [tx        (- ty 5)]])))
-
-(defn draw-node-connection
-  [context [fx fy fw fh] [tx ty tw th]]
-  (let [[side [sx sy] [ex ey]] (connection-points fx fy fw fh tx ty tw th)
-        dx                    (Math/max (Math/abs (/ (- sx ex) 2)) 10)
-        dy                    (Math/max (Math/abs (/ (- sy ey) 2)) 10)]
+(defn- draw-connection
+  [context {fx :x fy :y fw :w fh :h fr? :r?} {tx :x ty :y side :s color :c}]
+  (let [[[sx sy] [ex ey]] (connection-points fx fy fw fh fr? tx ty side)
+        dx (Math/max (Math/abs (/ (- sx ex) 2)) 10)
+        dy (Math/max (Math/abs (/ (- sy ey) 2)) 10)]
     (doto context
+      (aset "strokeStyle" color)
       (.beginPath)
       (.moveTo sx sy))
     (if (= side :left)
@@ -64,33 +91,44 @@
       (.bezierCurveTo context (+ sx dx) sy (- ex dx) ey ex ey))
     (.stroke context)))
 
-(defn draw-connections
-  [context graph off-x off-y items]
-  (doseq [[from to] (map-nodes (fn [p n] [p n]) items) :when (map? from)]
-    (let [[fw fh] (get graph (:uid from))
-          [tw th] (get graph (:uid to))]
-      (aset context "strokeStyle" (:color to))
-      (aset context "lineWidth" 3)
-      (draw-node-connection context
-                            [(- (:x from) off-x) (- (:y from) off-y) fw fh]
-                            [(- (:x to) off-x)   (- (:y to) off-y)   tw th]))))
+(defn- draw-nodes
+  [context dimensions items]
+  (doall
+   (map-nodes (fn [p n]
+                (let [from (get dimensions (:uid p))
+                      to   (get dimensions (:uid n))]
+                  (when from
+                    (draw-connection context from to))
+                  (doto context
+                    (aset "lineWidth" 3)
+                    (draw-node to)))) items)))
+
+(defn- adjust-position
+  [off-x off-y]
+  (fn [[k {:keys [x y tx ty] :as v}]]
+    [k (assoc v
+         :x  (- x off-x)
+         :y  (- y off-y)
+         :tx (- tx off-x)
+         :ty (- ty off-y))]))
 
 (defn draw-image
   [items]
   (let [buffer                (.createElement js/document "canvas")
         context               (.getContext buffer "2d")
-        [minx miny maxx maxy] (calculate-bounds context items)
+        dimensions            (build-dimensions context items)
+        [minx miny maxx maxy] (calculate-canvas-stats dimensions)
         [width height]        (calculate-canvas-size minx miny maxx maxy)
         off-x                 (- minx IMAGE-MARGIN)
-        off-y                 (- miny IMAGE-MARGIN)]
+        off-y                 (- miny IMAGE-MARGIN)
+        dimensions            (into {} (map (adjust-position off-y off-y) dimensions))]
     ;; resize buffer
     (set! (.-width buffer) width)
     (set! (.-height buffer) height)
     ;; prepare background
     (doto context
       (aset "fillStyle" "#FFFFFF")
-      (.fillRect 0 0 width height))
+      (.fillRect 0 0 width height)
+      (draw-nodes dimensions items))
     ;; draw node and their connections
-    (let [graph (draw-nodes context off-x off-y items)]
-      (draw-connections context graph off-x off-y items))
     (.toDataURL buffer "image/png")))
