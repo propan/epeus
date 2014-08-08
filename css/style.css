@@ -3,6 +3,7 @@
 body {
 	background-color: #F5F5F5;
     margin: 0;
+    font-family: 'Lato';
 }
 
 .container {
@@ -17,17 +18,19 @@ body {
 }
 
 .application-title {
-    float: left;
+    position: absolute;
     font-family: 'Crafty Girls';
-    font-size: 30px;
-    padding: 4px 10px 2px; 
+    font-size: 40px;
+    left: 0;
+    top: 0;
+    margin: -7px 10px 0 15px;
     color: #555;
 }
 
 .application-version {
-    float: left;
-    padding-top: 25px;
-    font-family: 'Lato';
+    position: absolute;
+    left: 140px;
+    padding-top: 22px;
     font-size: 10px;
     margin-left: -5px;
     color: #444;
@@ -35,16 +38,16 @@ body {
 
 .toolbar {
     float: right;
-    padding-right: 30px;
+    padding-right: 20px;
 }
 
 .toolbar-item {
     float: left;
     cursor: pointer;
     color: #C5C5C5;
-    font-size: 25px;
-    margin: 0 4px;
-    padding: 15px 0 10px;
+    font-size: 18px;
+    margin: 0 2px;
+    padding: 10px 0 10px;
 }
 
 .toolbar-item:hover {
@@ -54,6 +57,29 @@ body {
 .toolbar-item.disabled {
     color: #E0E0E0;
     cursor: not-allowed;
+}
+
+.zoom-toolbar {
+    position: absolute;
+    top: 38px;
+    background-color: #EEEEEE;
+    border: 1px solid #E2E2E2;
+    font-size: 14px;
+    z-index: 500;
+}
+
+.zoom-toolbar .button, .zoom-toolbar .label {
+    display: inline-block;
+    padding: 5px 10px;
+}
+
+.zoom-toolbar a:hover {
+    background-color: #c0c0c0;
+    color: #FFFFFF;
+}
+
+.zoom-toolbar .reset {
+    border-left: 1px solid #E2E2E2;
 }
 
 .inner:before, .inner:after {
@@ -67,10 +93,9 @@ body {
 }
 
 #document-container {
-    font-family: 'Lato';
     overflow: hidden;
     position: absolute;
-    top: 50px;
+    top: 38px;
     bottom: 0;
     left: 0;
     right: 0;
@@ -187,7 +212,7 @@ body {
     color: #808080;
     position: absolute;
     text-align: center;
-    top: 10px;
+    top: 5px;
     left: 20%;
     right: 20%;
 }
